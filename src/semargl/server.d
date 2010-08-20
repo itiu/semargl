@@ -51,7 +51,6 @@ private import amqp_private;
 private import amqp_socket;
 private import amqp_table;
 
-
 private Authorization az = null;
 public char[][char[]] props;
 
@@ -230,12 +229,19 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 	}
 }
 
+private bool apoptosis_mode = true;
+
+public void set_apoptosis_mode(bool on_off)
+{
+	apoptosis_mode = on_off;
+}
+
 int all_count_messages = 0;
 
 void get_message(byte* message, ulong message_size, mom_client from_client)
 {
-	//		log.trace("get message {}", msg[0 .. message_size]);
-	//		printf ("\nget message !%s!\n", message);
+	//	log.trace("get message {}", msg[0 .. message_size]);
+	//  printf ("\nget message !%s!\n", message);
 
 	try
 	{
@@ -296,6 +302,9 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 				log.trace("разбор сообщения");
 
 				Counts count_elements = calculate_count_facts(cast(char*) message, message_size);
+
+				//				log.trace("facts = {}, open_brakets = {}", count_elements.facts, count_elements.open_brakets);
+
 				fact_s = new char*[count_elements.facts];
 				fact_p = new char*[count_elements.facts];
 				fact_o = new char*[count_elements.facts];
@@ -304,6 +313,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 				int count_facts = extract_facts_from_message(cast(char*) message, message_size, count_elements, fact_s, fact_p, fact_o,
 						is_fact_in_object);
 
+				//				log.trace("count_facts = {}", count_facts);
 				// 				
 				// замапим предикаты фактов на конкретные переменные put_id, arg_id
 				int authorization_id = -1;
@@ -321,8 +331,8 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 				for(int i = 0; i < count_facts; i++)
 				{
-					//log.trace("look triple <{}><{}><{}>", getString(cast(char*) fact_s[i]), 
-					//  getString( cast(char*) fact_p[i]), getString(cast(char*) fact_o[i]));
+					//					log.trace("look triple <{}><{}><{}>", getString(cast(char*) fact_s[i]), getString(cast(char*) fact_p[i]), getString(
+					//							cast(char*) fact_o[i]));
 
 					if(strcmp(fact_p[i], SUBJECT.ptr) == 0)
 					{
@@ -837,16 +847,18 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 		}
 
-  	   log.trace("status execute message : SUCCESSFULLY\r\n");
-	}
-	catch (Exception ex)  
+		log.trace("status execute message : SUCCESSFULLY\r\n");
+	} catch(Exception ex)
 	{
-		log.trace("Exception: {}", ex.msg);		
-  	   	log.trace("status execute message : NO GOOD\r\n");
-	}	
-	finally
+		log.trace("Exception: {}", ex.msg);
+		log.trace("status execute message : NO GOOD\r\n");
+
+		if(apoptosis_mode == true)
+			throw ex;
+
+	} finally
 	{
-//		az.getTripleStorage().print_stat();
+		//		az.getTripleStorage().print_stat();
 		az.getTripleStorage().release_all_lists();
 	}
 }
@@ -927,7 +939,7 @@ private void remove_facts_of_subject_by_predicate(char* s, char* p)
 
 		for(int k = 0; k < cnt; k++)
 		{
-			az.getTripleStorage.removeTriple(getString (t_a[k].s), getString (t_a[k].p), getString (t_a[k].o));
+			az.getTripleStorage.removeTriple(getString(t_a[k].s), getString(t_a[k].p), getString(t_a[k].o));
 		}
 
 		az.getTripleStorage.list_no_longer_required(removed_facts_FE);
@@ -1198,8 +1210,8 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 	bool is_admin_of_hierarhical_delegates[] = new bool[hierarhical_delegates.length];
 	for(int ii = 0; ii < hierarhical_delegates.length; ii++)
 	{
-		is_admin_of_hierarhical_delegates[ii] = semargl.scripts.S01UserIsAdmin.calculate(hierarhical_delegates[ii].o, az.getTripleStorage(),
-				hierarhical_departments);
+		is_admin_of_hierarhical_delegates[ii] = semargl.scripts.S01UserIsAdmin.calculate(hierarhical_delegates[ii].o,
+				az.getTripleStorage(), hierarhical_departments);
 	}
 
 	//	log.trace("prepare_authorization_request #3");

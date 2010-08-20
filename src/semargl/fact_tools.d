@@ -22,9 +22,9 @@ public void print_list_triple(triple_list_element* list_iterator)
 		while(list_iterator !is null)
 		{
 			triple = list_iterator.triple;
-			if (triple !is null)
-			  print_triple(triple);
-			
+			if(triple !is null)
+				print_triple(triple);
+
 			list_iterator = list_iterator.next_triple_list_element;
 		}
 	}
@@ -41,7 +41,7 @@ public void print_triple(Triple* triple)
 
 	char* o = cast(char*) triple.o;
 
-	log.trace("triple: <{}><{}><{}>", getString (s), getString (p), getString (o));
+	log.trace("triple: <{}><{}><{}>", getString(s), getString(p), getString(o));
 }
 
 public Counts calculate_count_facts(char* message, ulong message_size)
@@ -62,21 +62,23 @@ public Counts calculate_count_facts(char* message, ulong message_size)
 	return res;
 }
 
-public uint extract_facts_from_message(char* message, ulong message_size, Counts counts, char* fact_s[],
-		char* fact_p[], char* fact_o[], uint is_fact_in_object[])
+public uint extract_facts_from_message(char* message, ulong message_size, Counts counts, char* fact_s[], char* fact_p[], char* fact_o[],
+		uint is_fact_in_object[])
 {
-	//	Stdout.format("extract_facts_from_message ... facts.size={}", counts.facts).newline;
+//	log.trace("extract_facts_from_message ... facts.size={}, counts.open_brakets={}", counts.facts, counts.open_brakets);
 
 	byte count_open_brakets = 0;
 	byte count_facts = 0;
 	byte count_fact_fragment = 0;
 
-	uint stack_brackets[] = new uint[counts.open_brakets];
+	uint stack_brackets[] = new uint[counts.open_brakets + 1];
 
 	bool is_open_quotes = false;
 
 	for(int i = 0; i < message_size; i++)
 	{
+//		log.trace("i = {}, count_facts={}, count_open_brakets={}, count_fact_fragment={}", i, count_facts, count_open_brakets, count_fact_fragment);
+		
 		char* cur_char_ptr = message + i;
 		char cur_char = *cur_char_ptr;
 
@@ -90,7 +92,7 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 				*cur_char_ptr = 0;
 			}
 		}
-
+				
 		if(cur_char == '{')
 		{
 			count_open_brakets++;
@@ -112,6 +114,7 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 
 				fact_s[count_facts] = cur_char_ptr + 1;
 			}
+			
 			if(count_fact_fragment == 1)
 			{
 				fact_p[count_facts] = cur_char_ptr + 1;
@@ -135,18 +138,19 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 			*cur_char_ptr = 0;
 		}
 
-	//			if(*cur_char == '}')
-	//				count_open_brakets--;
+		//			if(*cur_char == '}')
+		//				count_open_brakets--;
 
-	//			if(*cur_char == '.' && count_open_brakets == 0)
-	//			if(*cur_char == '.')
-	//			{
-	//				*cur_char = 0;
-	//				count_fact_fragment = 0;
-	//				count_facts++;
-	//			}
+		//			if(*cur_char == '.' && count_open_brakets == 0)
+		//			if(*cur_char == '.')
+		//			{
+		//				*cur_char = 0;
+		//				count_fact_fragment = 0;
+		//				count_facts++;
+		//			}
 	}
 
+//	log.trace("extract_facts_from_message ... ok");
 	/*
 	 Stdout.format("extract_facts_from_message ... ok").newline;
 
@@ -160,8 +164,7 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 	return count_facts;
 }
 
-public static final char[16] HEX_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
-		'f'];
+public static final char[16] HEX_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
 
 public static final ulong getUUID()
 {
@@ -188,7 +191,7 @@ public static final void longToHex(ulong dl, char* buff)
 	buff[0] = HEX_CHARS[cast(ubyte) ((dl >> 60) & 0x0F)];
 	buff[16] = 0;
 
-//	printf("time=%s\n", buff);
+	//	printf("time=%s\n", buff);
 }
 
 public static char[] getString(char* s)

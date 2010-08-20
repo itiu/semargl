@@ -1,19 +1,17 @@
-module autotest;
+module semargl.autotest;
 
 private import tango.io.Stdout;
 
-private import Predicates;
+private import semargl.Predicates;
 private import mom_client;
-private import Log;
-private import fact_tools;
+private import semargl.Log;
+private import semargl.fact_tools;
 
-//private import tango.io.File;
 private import tango.io.device.File;
 
-//private import Text = tango.text.Util;
 private import tango.text.Text;
-//private import tango.text.Regex;
-private import portions_read;
+private import semargl.portions_read;
+
 private import tango.stdc.string;
 private import tango.stdc.stringz;
 private import tango.stdc.stdio;

@@ -1,9 +1,9 @@
-module scripts.S01AllLoggedUsersCanCreateDocuments;
+module semargl.scripts.S01AllLoggedUsersCanCreateDocuments;
 
 private import tango.io.Stdout;
 
-private import RightTypeDef;
-private import Predicates;
+private import semargl.RightTypeDef;
+private import semargl.Predicates;
 private import trioplax.TripleStorage;
 
 public bool calculate(uint rightType)

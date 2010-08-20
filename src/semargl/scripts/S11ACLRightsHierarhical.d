@@ -1,4 +1,4 @@
-module scripts.S11ACLRightsHierarhical;
+module semargl.scripts.S11ACLRightsHierarhical;
 
 private import tango.io.Stdout;
 private import tango.stdc.string;
@@ -6,13 +6,13 @@ private import tango.stdc.stringz;
 private import tango.stdc.stdio;
 private import tango.core.Thread;
 
-private import Predicates;
-private import RightTypeDef;
+private import semargl.Predicates;
+private import semargl.RightTypeDef;
 private import trioplax.TripleStorage;
-private import script_util;
-private import fact_tools;
+private import semargl.script_util;
+private import semargl.fact_tools;
 private import trioplax.triple;
-private import Log;
+private import semargl.Log;
 
 public bool calculate(char* user, char* elementId, uint rightType, TripleStorage ts, char*[] iterator_on_targets_of_hierarhical_departments,
 		char[] pp, char* authorizedElementCategory)

@@ -1,12 +1,12 @@
-module scripts.S01UserIsAdmin;
+module semargl.scripts.S01UserIsAdmin;
 
 private import tango.io.Stdout;
 private import tango.stdc.stringz;
 
-private import Predicates;
+private import semargl.Predicates;
 private import trioplax.TripleStorage;
 private import trioplax.triple;
-private import Log;
+private import semargl.Log;
 
 static private bool[char*] cache;
 

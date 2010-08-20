@@ -1,12 +1,12 @@
-module scripts.S10UserIsAuthorOfDocument;
+module semargl.scripts.S10UserIsAuthorOfDocument;
 
 private import tango.stdc.string;
 private import tango.io.Stdout;
 
 private import trioplax.TripleStorage;
 private import trioplax.triple;
-private import fact_tools;
-private import Predicates;
+private import semargl.fact_tools;
+private import semargl.Predicates;
 
 public bool calculate(char* user, char* elementId, uint rightType, TripleStorage ts, triple_list_element* iterator_facts_of_document)
 {

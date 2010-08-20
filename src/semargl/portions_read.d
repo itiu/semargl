@@ -1,8 +1,8 @@
-module portions_read;
+module semargl.portions_read;
 
-private import mod.tango.io.device.File;
+private import semargl.mod.tango.io.device.File;
 private import tango.stdc.string;
-private import Log;
+private import semargl.Log;
 
 void parse_file(char[] file_name, char[] begin_block_marker, char[] end_block_marker, void function(char* txt, ulong size) _block_acceptor)
 {

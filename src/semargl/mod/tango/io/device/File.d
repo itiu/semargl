@@ -15,11 +15,11 @@
 
 *******************************************************************************/
 
-module mod.tango.io.device.File;
+module semargl.mod.tango.io.device.File;
 
 private import tango.sys.Common;
 
-private import mod.tango.io.device.Device;
+private import semargl.mod.tango.io.device.Device;
 
 private import stdc = tango.stdc.stringz;
 

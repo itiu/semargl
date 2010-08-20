@@ -6,7 +6,7 @@
  Description:    some logging stuff
  Date:                   09.12.2008 by Digited
  **/
-module Log;
+module semargl.Log;
 
 private import tango.util.log.Log;
 
@@ -38,9 +38,9 @@ private
 		// trace is the lowest level, so all levels are logged
 		Log.root.level(Logger.Level.Trace);
 
-		log = Log.getLogger("trace");
+		log = Log.getLogger("semargl");
 
-		_logFile = new AppendFile("app.log", new VerySimpleLayout);
+		_logFile = new AppendFile("semargl.log", new VerySimpleLayout);
 		log.add(_logFile);
 	}
 

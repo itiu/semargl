@@ -1,14 +1,14 @@
-module scripts.S05InDocFlow;
+module semargl.scripts.S05InDocFlow;
 
 private import tango.stdc.stringz;
 private import tango.io.Stdout;
 
-private import Predicates;
-private import RightTypeDef;
+private import semargl.Predicates;
+private import semargl.RightTypeDef;
 private import trioplax.TripleStorage;
 private import trioplax.triple;
-private import script_util;
-private import Log;
+private import semargl.script_util;
+private import semargl.Log;
 
 public int calculate(char* user, char* elementId, uint rightType, TripleStorage ts)
 {

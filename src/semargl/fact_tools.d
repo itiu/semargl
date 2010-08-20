@@ -1,11 +1,11 @@
-module fact_tools;
+module semargl.fact_tools;
 
 private import tango.time.Clock;
 private import tango.time.Time;
 private import tango.stdc.stdio;
 private import tango.io.Stdout;
 private import tango.stdc.string;
-private import Log;
+private import semargl.Log;
 private import trioplax.triple;
 
 struct Counts

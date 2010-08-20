@@ -1,6 +1,6 @@
-module persistent_triple_storage;
+module semargl.persistent_triple_storage;
 
-private import mod.tango.io.device.File;
+private import semargl.mod.tango.io.device.File;
 
 private import tango.io.FileScan;
 private import tango.time.StopWatch;
@@ -8,8 +8,8 @@ private import tango.io.Stdout;
 private import Text = tango.text.Util;
 
 private import trioplax.TripleStorage;
-private import fact_tools;
-private import Log;
+private import semargl.fact_tools;
+private import semargl.Log;
 private import trioplax.triple;
 private import tango.stdc.stdio;
 private import tango.stdc.string;

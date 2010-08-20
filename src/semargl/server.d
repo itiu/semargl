@@ -1,6 +1,6 @@
-module server;
+module semargl.server;
 
-private import Predicates;
+private import semargl.Predicates;
 
 private import tango.core.Thread;
 private import tango.io.Console;
@@ -8,7 +8,7 @@ private import tango.stdc.string;
 private import tango.stdc.stdlib;
 private import tango.stdc.stdio;
 private import tango.stdc.stringz;
-private import Log;
+private import semargl.Log;
 
 private import tango.io.device.File;
 private import tango.io.FileScan;
@@ -29,16 +29,16 @@ private import trioplax.memory.TripleStorageMemory;
 private import trioplax.memory.IndexException;
 private import trioplax.mongodb.TripleStorageMongoDB;
 
-private import authorization;
+private import semargl.authorization;
 
 private import mom_client;
 private import librabbitmq_client;
 // private import libdbus_client;
-private import autotest;
+private import semargl.autotest;
 
-private import script_util;
-private import RightTypeDef;
-private import fact_tools;
+private import semargl.script_util;
+private import semargl.RightTypeDef;
+private import semargl.fact_tools;
 
 private import amqp;
 private import amqp_api;
@@ -1192,13 +1192,13 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 	time_calculate_right.start;
 
 	//	вычислим, админ ли user
-	bool isAdmin = scripts.S01UserIsAdmin.calculate(user, az.getTripleStorage(), hierarhical_departments);
+	bool isAdmin = semargl.scripts.S01UserIsAdmin.calculate(user, az.getTripleStorage(), hierarhical_departments);
 
 	//	вычислим, админ ли каждый из иерархии делегатов
 	bool is_admin_of_hierarhical_delegates[] = new bool[hierarhical_delegates.length];
 	for(int ii = 0; ii < hierarhical_delegates.length; ii++)
 	{
-		is_admin_of_hierarhical_delegates[ii] = scripts.S01UserIsAdmin.calculate(hierarhical_delegates[ii].o, az.getTripleStorage(),
+		is_admin_of_hierarhical_delegates[ii] = semargl.scripts.S01UserIsAdmin.calculate(hierarhical_delegates[ii].o, az.getTripleStorage(),
 				hierarhical_departments);
 	}
 

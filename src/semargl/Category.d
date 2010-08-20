@@ -1,4 +1,4 @@
-module Category;
+module semargl.Category;
 
 public static const char[] DOCUMENT = "DOCUMENT";
 public static const char[] DOCUMENT_DRAFT = "DOCUMENTTDRAFT";

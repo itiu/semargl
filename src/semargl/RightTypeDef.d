@@ -1,4 +1,4 @@
-module RightTypeDef;
+module semargl.RightTypeDef;
 
 public static char* rt_symbols = "crwud";
 

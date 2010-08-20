@@ -1,4 +1,4 @@
-module script_util;
+module semargl.script_util;
 
 private import tango.io.Stdout;
 private import tango.text.convert.Integer;
@@ -6,11 +6,11 @@ private import tango.stdc.string;
 private import tango.stdc.stringz;
 private import tango.stdc.time;
 
-private import Predicates;
-private import RightTypeDef;
+private import semargl.Predicates;
+private import semargl.RightTypeDef;
 private import trioplax.TripleStorage;
-private import fact_tools;
-private import Log;
+private import semargl.fact_tools;
+private import semargl.Log;
 private import trioplax.triple;
 
 /*

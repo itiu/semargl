@@ -10,13 +10,13 @@
 
  *******************************************************************************/
 
-module mod.tango.io.device.Device;
+module semargl.mod.tango.io.device.Device;
 
 private import tango.sys.Common;
 
 private import tango.core.Exception;
 
-public import mod.tango.io.device.Conduit;
+public import semargl.mod.tango.io.device.Conduit;
 
 /*******************************************************************************
 

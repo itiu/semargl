@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module mod.tango.io.device.Conduit;
+module semargl.mod.tango.io.device.Conduit;
 
 private import tango.core.Exception;
 

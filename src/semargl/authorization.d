@@ -1,6 +1,6 @@
-module authorization;
+module semargl.authorization;
 
-private import Predicates;
+private import semargl.Predicates;
 
 private import tango.io.Stdout;
 private import tango.stdc.string;
@@ -21,20 +21,20 @@ private import tango.text.convert.TimeStamp;
 private import tango.text.convert.Layout;
 private import tango.core.Thread;
 
-private import scripts.S05InDocFlow;
-private import scripts.S01AllLoggedUsersCanCreateDocuments;
-private import scripts.S01UserIsAdmin;
-private import scripts.S09DocumentOfTemplate;
-private import scripts.S10UserIsAuthorOfDocument;
-private import scripts.S11ACLRightsHierarhical;
+private import semargl.scripts.S05InDocFlow;
+private import semargl.scripts.S01AllLoggedUsersCanCreateDocuments;
+private import semargl.scripts.S01UserIsAdmin;
+private import semargl.scripts.S09DocumentOfTemplate;
+private import semargl.scripts.S10UserIsAuthorOfDocument;
+private import semargl.scripts.S11ACLRightsHierarhical;
 
-private import RightTypeDef;
-private import script_util;
+private import semargl.RightTypeDef;
+private import semargl.script_util;
 
-private import persistent_triple_storage;
+private import semargl.persistent_triple_storage;
 
-private import fact_tools;
-private import Log;
+private import semargl.fact_tools;
+private import semargl.Log;
 
 private import trioplax.triple;
 private import trioplax.TripleStorage;
@@ -43,11 +43,11 @@ private import trioplax.memory.TripleStorageMemory;
 private import trioplax.mongodb.TripleStorageMongoDB;
 private import trioplax.memory.IndexException;
 
-private import Category;
+private import semargl.Category;
 
 //private import mom_client;
 
-private import server;
+private import semargl.server;
 
 class Authorization
 {
@@ -124,15 +124,25 @@ class Authorization
 	private int getIntProps(char[] str)
 	{
 		char[] value = props[str];
-		value[length] = 0;
-		return atoi(value.ptr);
+		if(value !is null)
+		{
+			//			value[value.length - 1] = 0;
+			return atoi(value.ptr);
+		}
+		return 0;
 	}
 
 	private char[] getStrProps(char[] str)
 	{
 		char[] value = props[str];
-		value[length] = 0;
-		return value;
+		if(value !is null)
+		{
+			log.trace("{} = {}", str, value);
+			//			value[value.length - 1] = 0;
+			return value;
+		}
+		else
+			return null;
 	}
 
 	private void init(char[][char[]] props)
@@ -141,8 +151,7 @@ class Authorization
 		{
 			log.trace("authorization init..");
 			Stdout.format("authorization init..").newline;
-			
-			
+
 			if(triples_in_memory)
 			{
 				ts_mem = new TripleStorageMemory(getIntProps("index_SPO_count"), getIntProps("index_SPO_short_order"), getIntProps(
@@ -348,8 +357,8 @@ class Authorization
 	bool f_authorization_trace = false;
 
 	// необходимые данные загружены, сделаем пробное выполнение скриптов для заданного пользователя
-	public bool calculateRightOfAuthorizedElement(char* authorizedElementCategory, char* authorizedElementId, char* User, uint targetRightType,
-			char*[] hierarhical_departments, bool isAdmin, triple_list_element* iterator_facts_of_document)
+	public bool calculateRightOfAuthorizedElement(char* authorizedElementCategory, char* authorizedElementId, char* User,
+			uint targetRightType, char*[] hierarhical_departments, bool isAdmin, triple_list_element* iterator_facts_of_document)
 	{
 		if(f_authorization_trace)
 		{
@@ -365,9 +374,9 @@ class Authorization
 			log.trace("autorize:S01UserIsAdmin res={}", isAdmin);
 		}
 		bool result;
-		if(strcmp(authorizedElementCategory, Category.PERMISSION.ptr) == 0)
+		if(strcmp(authorizedElementCategory, semargl.Category.PERMISSION.ptr) == 0)
 		{
-			calculatedRight = scripts.S10UserIsPermissionTargetAuthor.calculate(User, authorizedElementId, targetRightType, ts);
+			calculatedRight = semargl.scripts.S10UserIsPermissionTargetAuthor.calculate(User, authorizedElementId, targetRightType, ts);
 
 			result = isAdmin || calculatedRight;
 
@@ -381,13 +390,13 @@ class Authorization
 
 		int is_in_docflow = -1;
 		if((targetRightType == RightType.UPDATE || targetRightType == RightType.DELETE || targetRightType == RightType.WRITE) && strcmp(
-				authorizedElementCategory, Category.DOCUMENT.ptr) == 0)
+				authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0)
 		{
 			if(f_authorization_trace)
 			{
 				log.trace("#udw, category = DOCUMENT");
 			}
-			is_in_docflow = scripts.S05InDocFlow.calculate(User, authorizedElementId, targetRightType, ts);
+			is_in_docflow = semargl.scripts.S05InDocFlow.calculate(User, authorizedElementId, targetRightType, ts);
 			if(is_in_docflow == 1)
 			{
 				//counters[1]++;
@@ -408,11 +417,11 @@ class Authorization
 			}
 		}
 
-		if(targetRightType == RightType.CREATE && (strcmp(authorizedElementCategory, Category.DOCUMENT.ptr) == 0 || (*authorizedElementId == '*' && strcmp(
-				authorizedElementCategory, Category.DOCUMENT_TEMPLATE.ptr) == 0)))
+		if(targetRightType == RightType.CREATE && (strcmp(authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0 || (*authorizedElementId == '*' && strcmp(
+				authorizedElementCategory, semargl.Category.DOCUMENT_TEMPLATE.ptr) == 0)))
 
 		{
-			if(scripts.S01AllLoggedUsersCanCreateDocuments.calculate(targetRightType))
+			if(semargl.scripts.S01AllLoggedUsersCanCreateDocuments.calculate(targetRightType))
 			{
 				if(f_authorization_trace)
 				{
@@ -423,8 +432,8 @@ class Authorization
 			////log.trace("autorize end#0, return:[{}]", calculatedRight);
 		}
 
-		result = strcmp(authorizedElementCategory, Category.DOCUMENT.ptr) == 0 && scripts.S09DocumentOfTemplate.calculate(User,
-				authorizedElementId, targetRightType, ts, hierarhical_departments, pp);
+		result = strcmp(authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0 && semargl.scripts.S09DocumentOfTemplate.calculate(
+				User, authorizedElementId, targetRightType, ts, hierarhical_departments, pp);
 		if(result)
 		{
 			if(f_authorization_trace)
@@ -435,7 +444,7 @@ class Authorization
 		}
 
 		if(strcmp("null", authorizedElementId) != 0 && iterator_facts_of_document is null && strcmp(authorizedElementCategory,
-				Category.DOCUMENT.ptr) == 0)
+				semargl.Category.DOCUMENT.ptr) == 0)
 		{
 			if(f_authorization_trace)
 			{
@@ -446,13 +455,13 @@ class Authorization
 			return false;
 		}
 
-		if(scripts.S11ACLRightsHierarhical.calculate(User, authorizedElementId, targetRightType, ts, hierarhical_departments, pp,
+		if(semargl.scripts.S11ACLRightsHierarhical.calculate(User, authorizedElementId, targetRightType, ts, hierarhical_departments, pp,
 				authorizedElementCategory))
 		{
 			return true;
 		}
 
-		if(scripts.S10UserIsAuthorOfDocument.calculate(User, authorizedElementId, targetRightType, ts, iterator_facts_of_document))
+		if(semargl.scripts.S10UserIsAuthorOfDocument.calculate(User, authorizedElementId, targetRightType, ts, iterator_facts_of_document))
 		{
 			return true;
 		}

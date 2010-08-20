@@ -1,13 +1,13 @@
-module scripts.S10UserIsPermissionTargetAuthor;
+module semargl.scripts.S10UserIsPermissionTargetAuthor;
 
 private import tango.stdc.string;
 private import tango.stdc.stringz;
 private import tango.io.Stdout;
 
-private import Predicates;
+private import semargl.Predicates;
 private import trioplax.TripleStorage;
 private import trioplax.triple;
-private import Log;
+private import semargl.Log;
 
 public bool calculate(char* user, char* elementId, uint rightType, TripleStorage ts)
 {

@@ -52,6 +52,7 @@ private import semargl.server;
 class Authorization
 {
 	private bool triples_in_memory = false;
+	private bool use_cache_for_TripleStorageOnMongodb = false;
 
 	private char[][] i_know_predicates;
 	private TripleStorage ts = null;
@@ -63,9 +64,10 @@ class Authorization
 	private char[] log_path = "";
 	private File log_file;
 
-	this(char[][char[]] props, bool _triples_in_memory)
+	this(char[][char[]] props, bool _triples_in_memory, bool _use_cache_for_TripleStorageOnMongodb)
 	{
 		triples_in_memory = _triples_in_memory;
+		use_cache_for_TripleStorageOnMongodb = _use_cache_for_TripleStorageOnMongodb;
 
 		counters = new int[10];
 
@@ -174,6 +176,9 @@ class Authorization
 			else
 			{
 				ts_mongo = new TripleStorageMongoDB(getStrProps("mongodb_server"), getIntProps("mongodb_port"));
+
+				if(use_cache_for_TripleStorageOnMongodb == true)
+					ts_mongo.set_cache();
 
 				ts = cast(TripleStorage) ts_mongo;
 			}

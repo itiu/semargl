@@ -74,7 +74,8 @@ void main(char[][] args)
 	bool nocompare = false;
 	bool log_query = false;
 	bool in_memory_mode = false;
-
+	bool use_cache_for_TripleStorageOnMongodb = false;
+	
 	if(args.length > 0)
 	{
 		for(int i = 0; i < args.length; i++)
@@ -100,10 +101,15 @@ void main(char[][] args)
 				log_query = true;
 				log.trace("log query mode");
 			}
-			if(args[i] == "-in_memory" || args[i] == "-m")
+			if(args[i] == "-m")
 			{
 				in_memory_mode = true;
 				log.trace("trioplax in memory mode");
+			}
+			if(args[i] == "-uc")
+			{
+				use_cache_for_TripleStorageOnMongodb = true;
+				log.trace("use cache for TripleStorageOnMongodb");
 			}
 		}
 	}
@@ -116,7 +122,7 @@ void main(char[][] args)
 
 	props = load_props();
 
-	az = new Authorization(props, in_memory_mode);
+	az = new Authorization(props, in_memory_mode, use_cache_for_TripleStorageOnMongodb);
 
 	if(log_query)
 		az.getTripleStorage().set_log_query_mode(true);

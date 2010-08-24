@@ -205,13 +205,20 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 
 	StopWatch* elapsed = new StopWatch();
 	double time;
+	
+	if (queue_name[0] != 0)
+	{
+		log.trace("send to queue {}", fromStringz(queue_name));
+		elapsed.start;
+		from_client.send(queue_name, result_buffer);
+		time = elapsed.stop;
+		log.trace("send result time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);		
+	}
+	else
+	{
+		log.trace("no send to queue");		
+	}
 
-	log.trace("send to queue {}", fromStringz(queue_name));
-	elapsed.start;
-	from_client.send(queue_name, result_buffer);
-
-	time = elapsed.stop;
-	log.trace("send result time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
 
 	if(logging_io_messages)
 	{

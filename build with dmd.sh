@@ -7,8 +7,8 @@ cd build
 git clone --depth 1 git@gh:itiu/rabbitmq-connector.git
 cp -r rabbitmq-connector/src/* src
 
-#git clone --depth 1 git@gh:itiu/trioplax.git
-#cp -r trioplax/src/* src
+git clone --depth 1 git@gh:itiu/trioplax.git
+cp -r trioplax/src/* src
 
 git clone --depth 1 git@gh:itiu/mongo-d-driver.git
 cp -r mongo-d-driver/src/* src

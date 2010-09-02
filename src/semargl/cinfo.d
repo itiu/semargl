@@ -12,20 +12,31 @@ private Locale layout;
 void go()
 {
 	layout = new Locale;
-	
+
 	int prev_count = 0;
+	double prev_total_time = 0;
 	double sleep_time = 3;
+	bool ff = false;
 
 	while(true)
 	{
 		Thread.sleep(sleep_time);
-		
-		int delta = all_count_messages - prev_count;
-
 		auto tm = WallClock.now;
-		
-		Stdout.format(layout ("{:yyyy-MM-dd HH:mm:ss} * {}, cps={}", tm, all_count_messages, delta / sleep_time)).newline;
+
+		int delta_count = all_count_messages - prev_count;
+		double delta_working_time = total_time - prev_total_time;
+
+		if(delta_count > 0 || ff == false)
+		{
+			Stdout.format(layout("{:yyyy-MM-dd HH:mm:ss} * {}, delta_working_time={}, cps={}, time usage={}", tm, all_count_messages, delta_working_time, delta_count / delta_working_time, delta_working_time/sleep_time*100)).newline;
+		}
+
+		if(delta_count > 0)
+			ff = false;
+		else
+			ff = true;
 
 		prev_count = all_count_messages;
+		prev_total_time = total_time;
 	}
 }

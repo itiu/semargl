@@ -50,6 +50,7 @@ private import amqp_mem;
 private import amqp_private;
 private import amqp_socket;
 private import amqp_table;
+private import semargl.cinfo;
 
 private Authorization az = null;
 public char[][char[]] props;
@@ -61,11 +62,13 @@ private char* user = null;
 private bool logging_io_messages = true;
 private Locale layout;
 
-File file;
+private File file;
 
-char[] set_text_color_green = "\x1B[32m";
-char[] set_text_color_blue = "\x1B[34m";
-char[] all_attribute_off = "\x1B[0m";
+private char[] set_text_color_green = "\x1B[32m";
+private char[] set_text_color_blue = "\x1B[34m";
+private char[] all_attribute_off = "\x1B[0m";
+
+private final ulong m1 = 1;
 
 void main(char[][] args)
 {
@@ -75,7 +78,9 @@ void main(char[][] args)
 	bool log_query = false;
 	bool in_memory_mode = false;
 	bool use_cache_for_TripleStorageOnMongodb = false;
-	
+
+	ulong mtf = 0;
+
 	if(args.length > 0)
 	{
 		for(int i = 0; i < args.length; i++)
@@ -193,8 +198,8 @@ void main(char[][] args)
 		Thread.sleep(0.250);
 	}
 
-	//@@@
-	//	Thread.sleep(25);
+	Thread thread = new Thread(&go);
+	thread.start;
 }
 
 void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom_client from_client)
@@ -205,20 +210,24 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 
 	StopWatch* elapsed = new StopWatch();
 	double time;
-	
-	if (queue_name[0] != 0)
+
+	if(queue_name[0] != 0)
 	{
-		log.trace("send to queue {}", fromStringz(queue_name));
+		if(mtf & m1)
+			log.trace("send to queue {}", fromStringz(queue_name));
+
 		elapsed.start;
 		from_client.send(queue_name, result_buffer);
 		time = elapsed.stop;
-		log.trace("send result time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);		
+
+		if(mtf & m1)
+			log.trace("send result time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
 	}
 	else
 	{
-		log.trace("no send to queue");		
+		if(mtf & m1)
+			log.trace("no send to queue");
 	}
-
 
 	if(logging_io_messages)
 	{
@@ -228,7 +237,7 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 
 		auto tm = WallClock.now;
 		auto dt = Clock.toDate(tm);
-		writeToLog(layout("{:yyyy-MM-dd HH:mm:ss},{} OUTPUT\r\n", tm, dt.time.millis));
+		writeToLog(layout("\r\n\r\n{:yyyy-MM-dd HH:mm:ss},{} OUTPUT\r\n", tm, dt.time.millis));
 		writeToLog(str1);
 
 		time = elapsed.stop;
@@ -236,9 +245,9 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 
 		//		str1[str1.length] = 0;
 
-		printf(
-				(set_text_color_green ~ layout("\nout message {:yyyy-MM-dd HH:mm:ss},{}", tm, dt.time.millis) ~ all_attribute_off ~ "\n[%s]\n\0").ptr,
-				result_buffer);
+		//		printf(
+		//				(set_text_color_green ~ layout("\nout message {:yyyy-MM-dd HH:mm:ss},{}", tm, dt.time.millis) ~ all_attribute_off ~ "\n[%s]\n\0").ptr,
+		//				result_buffer);
 	}
 }
 
@@ -249,15 +258,19 @@ public void set_apoptosis_mode(bool on_off)
 	apoptosis_mode = on_off;
 }
 
-int all_count_messages = 0;
+public int all_count_messages = 0;
+public double total_time = 0; // total time, prepare message (ms)
 
 void get_message(byte* message, ulong message_size, mom_client from_client)
 {
 	//	log.trace("get message {}", msg[0 .. message_size]);
 	//  printf ("\nget message !%s!\n", message);
+	StopWatch* total_elapsed = new StopWatch();
 
 	try
 	{
+		total_elapsed.start;
+
 		synchronized
 		{
 			all_count_messages++;
@@ -278,12 +291,11 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 				auto tm = WallClock.now;
 				auto dt = Clock.toDate(tm);
 
-				printf((set_text_color_blue ~ layout("\nget message {:yyyy-MM-dd HH:mm:ss},{}, size message={}, total count messages={} ",
-						tm, dt.time.millis, message_size, all_count_messages) ~ all_attribute_off ~ "\n[%s]\n\0").ptr, message);
+				//				printf((set_text_color_blue ~ layout("\nget message {:yyyy-MM-dd HH:mm:ss},{}, size message={}, total count messages={} ",
+				//						tm, dt.time.millis, message_size, all_count_messages) ~ all_attribute_off ~ "\n[%s]\n\0").ptr, message);
 
-				writeToLog(layout("{:yyyy-MM-dd HH:mm:ss},{} INPUT\r\n", tm, dt.time.millis));
+				writeToLog(layout("\r\n\r\n{:yyyy-MM-dd HH:mm:ss},{} INPUT\r\n", tm, dt.time.millis));
 				writeToLog(message_buffer);
-				writeToLog("\r\n\r\n");
 				time = elapsed.stop;
 				log.trace("logging input message, time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
 			}
@@ -312,7 +324,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 			if(*(message + 0) == '<' && *(message + (message_size - 1)) == '.')
 			{
-				log.trace("разбор сообщения");
+				//				log.trace("разбор сообщения");
 
 				Counts count_elements = calculate_count_facts(cast(char*) message, message_size);
 
@@ -355,42 +367,42 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 						{
 							//log.trace("#2");
 							authorization_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(put_id < 0 && strcmp(fact_o[i], PUT.ptr) == 0)
 						{
 							put_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(delete_subjects_by_predicate_id < 0 && strcmp(fact_o[i], DELETE_SUBJECTS_BY_PREDICATE.ptr) == 0)
 						{
 							delete_subjects_by_predicate_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(get_id < 0 && strcmp(fact_o[i], GET.ptr) == 0)
 						{
 							get_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(delete_subjects_id < 0 && strcmp(fact_o[i], DELETE_SUBJECTS.ptr) == 0)
 						{
 							delete_subjects_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(get_delegate_assigners_tree_id < 0 && strcmp(fact_o[i], GET_DELEGATE_ASSIGNERS_TREE.ptr) == 0)
 						{
 							get_delegate_assigners_tree_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(get_delegators_records_id < 0 && strcmp(fact_o[i], GET_DELEGATORS_RECORDS.ptr) == 0)
 						{
 							get_delegators_records_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(get_id < 0 && strcmp(fact_o[i], GET_AUTHORIZATION_RIGHT_RECORDS.ptr) == 0)
 						{
 							get_authorization_rights_records_id = i;
-							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
 						}
 						else if(put_id < 0 && strcmp(fact_o[i], "magnet-ontology#agent_function") == 0)
 						{
@@ -398,7 +410,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 						}
 						else if(put_id < 0 && strcmp(fact_o[i], CREATE.ptr) == 0)
 						{
-							log.trace("found tag {}, id ={} ", getString(fact_o[i]), i);
+							//							log.trace("found tag {}, id ={} ", getString(fact_o[i]), i);
 							create_id = i;
 							put_id = i;
 						}
@@ -407,12 +419,12 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 					else if(arg_id < 0 && strcmp(fact_p[i], FUNCTION_ARGUMENT.ptr) == 0)
 					{
 						arg_id = i;
-						log.trace("found tag {}, id ={} ", getString(fact_p[i]), i);
+						//						log.trace("found tag {}, id ={} ", getString(fact_p[i]), i);
 					}
 
 				}
 
-				log.trace("разбор сообщения закончен : uid = {}", getString(fact_s[0]));
+				//				log.trace("разбор сообщения закончен : uid = {}", getString(fact_s[0]));
 
 				bool
 						isCommandRecognized = delete_subjects_id > -1 || get_id > -1 || put_id > -1 || delete_subjects_by_predicate_id > -1 || get_authorization_rights_records_id > -1 || add_delegates_id > -1 || get_delegate_assigners_tree_id > -1 || get_delegators_records_id > -1 || agent_function_id > -1 || create_id > -1 || authorization_id > -1;
@@ -871,6 +883,9 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 	} finally
 	{
+		double time = total_elapsed.stop;
+
+		total_time += time;
 		//		az.getTripleStorage().print_stat();
 		az.getTripleStorage().release_all_lists();
 	}
@@ -1188,7 +1203,7 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 			if(delegates_facts !is null)
 			{
 				hierarhical_delegates_document_id[ii] = delegates_facts.triple.o;
-				log.trace("hierarhical_delegates_document_id[{}] = ", ii, getString(delegates_facts.triple.o));
+				//				log.trace("hierarhical_delegates_document_id[{}] = ", ii, getString(delegates_facts.triple.o));
 
 			}
 		}

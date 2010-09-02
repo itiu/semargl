@@ -896,9 +896,9 @@ class Authorization
 		strcpy(result_ptr, result_data_header_with_bracets.ptr);
 		result_ptr += result_data_header_with_bracets.length;
 
-		//		log.trace("getDelegators:arg = s={}", getString(fact_s[arg_id]));
-		//		log.trace("getDelegators:arg = p={}", getString(fact_p[arg_id]));
-		//		log.trace("getDelegators:arg = o={}", getString(fact_o[arg_id]));
+				log.trace("getDelegators:arg = s={}", getString(fact_s[arg_id]));
+				log.trace("getDelegators:arg = p={}", getString(fact_p[arg_id]));
+				log.trace("getDelegators:arg = o={}", getString(fact_o[arg_id]));
 
 		triple_list_element* delegators_facts = ts.getTriples(null, DELEGATION_DELEGATE.ptr, fact_o[arg_id]);
 
@@ -909,15 +909,19 @@ class Authorization
 			if(delegator !is null)
 			{
 				char* subject = cast(char*) delegator.s;
-				//				log.trace("delegator = {}", getString(subject));
+				log.trace("delegator = {}, count={}", getString(subject), ts.get_count_form_list_triple(delegators_facts));
 
 				triple_list_element* delegate_records = ts.getTriples(subject, null, null);
+				
 
 				while(delegate_records !is null)
 				{
+					
 					Triple* fact_of_record = delegate_records.triple;
 
-					//					log.trace("		facts = <{}><{}><{}>", getString(fact_of_record.s), getString(fact_of_record.p), getString(fact_of_record.o));
+					log.trace("		facts = <{}><{}><{}>", getString(fact_of_record.s), getString(fact_of_record.p), getString(
+							fact_of_record.o));
+					
 					*result_ptr = '<';
 					strcpy(result_ptr + 1, fact_of_record.s);
 					result_ptr += strlen(fact_of_record.s) + 1;
@@ -938,7 +942,6 @@ class Authorization
 
 					delegate_records = delegate_records.next_triple_list_element;
 				}
-
 			}
 
 			delegators_facts = delegators_facts.next_triple_list_element;

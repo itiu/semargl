@@ -69,6 +69,7 @@ private char[] set_text_color_blue = "\x1B[34m";
 private char[] all_attribute_off = "\x1B[0m";
 
 private final ulong m1 = 1;
+public	ulong mtf = 0;
 
 void main(char[][] args)
 {
@@ -78,8 +79,6 @@ void main(char[][] args)
 	bool log_query = false;
 	bool in_memory_mode = false;
 	bool use_cache_for_TripleStorageOnMongodb = false;
-
-	ulong mtf = 0;
 
 	if(args.length > 0)
 	{

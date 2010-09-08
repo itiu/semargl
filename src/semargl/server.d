@@ -52,6 +52,11 @@ private import amqp_socket;
 private import amqp_table;
 private import semargl.cinfo;
 
+private import libzmq_client;
+private import libzmq_headers;
+
+
+
 private Authorization az = null;
 public char[][char[]] props;
 
@@ -69,7 +74,7 @@ private char[] set_text_color_blue = "\x1B[34m";
 private char[] all_attribute_off = "\x1B[0m";
 
 private final ulong m1 = 1;
-public	ulong mtf = 0;
+ulong mtf = 1;
 
 void main(char[][] args)
 {
@@ -154,9 +159,16 @@ void main(char[][] args)
 
 			Thread thread = new Thread(&client.listener);
 			thread.start;
+			log.trace("start new thread, rabbitmq {:X4}", &thread);
 			Thread.sleep(0.250);
 
-			log.trace("start new Thread {:X4}", &thread);
+			mom_client zmq_client = new libzmq_client("tcp://127.0.0.1:5555");
+			zmq_client.set_callback(&get_message);
+
+			thread = new Thread(&zmq_client.listener);
+			thread.start;
+			log.trace("start new thread, zeromq {:X4}", &thread);
+			Thread.sleep(0.250);			
 		}
 
 		/*
@@ -203,10 +215,6 @@ void main(char[][] args)
 
 void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom_client from_client)
 {
-	if(logging_io_messages)
-	{
-	}
-
 	StopWatch* elapsed = new StopWatch();
 	double time;
 
@@ -457,8 +465,6 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 					strcpy(queue_name, fact_o[reply_to_id]);
 
 					send_result_and_logging_messages(queue_name, result_buffer, from_client);
-
-					return;
 				}
 
 				if(agent_function_id >= 0 && arg_id > 0)
@@ -882,12 +888,14 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 	} finally
 	{
+//		log.trace("status execute message : FINALLY");
 		double time = total_elapsed.stop;
 
 		total_time += time;
 		//		az.getTripleStorage().print_stat();
 		az.getTripleStorage().release_all_lists();
 	}
+//	Stdout.format("status execute message : eXIT").newline;
 }
 
 void remove_subject(char* s)

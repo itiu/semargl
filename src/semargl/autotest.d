@@ -45,7 +45,7 @@ class autotest: mom_client
 		message_acceptor = _message_acceptor;
 	}
 
-	int send(char* routingkey, char* messagebody)
+	int send(char* routingkey, char* messagebody, bool multi_part_msg)
 	{
 
 		if(nocompare == false)

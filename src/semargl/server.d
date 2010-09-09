@@ -141,6 +141,7 @@ void main(char[][] args)
 		log.trace("no autotest mode");
 
 		char[] hostname = props["amqp_server_address"] ~ "\0";
+		char[] zmq_point = props["zmq_point"] ~ "\0";
 
 		if(hostname.length > 2)
 		{
@@ -162,7 +163,7 @@ void main(char[][] args)
 			log.trace("start new thread, rabbitmq {:X4}", &thread);
 			Thread.sleep(0.250);
 
-			mom_client zmq_client = new libzmq_client("tcp://127.0.0.1:5555");
+			mom_client zmq_client = new libzmq_client(zmq_point.ptr);
 			zmq_client.set_callback(&get_message);
 
 			thread = new Thread(&zmq_client.listener);
@@ -213,7 +214,7 @@ void main(char[][] args)
 	thread.start;
 }
 
-void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom_client from_client)
+void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom_client from_client, bool send_more)
 {
 	StopWatch* elapsed = new StopWatch();
 	double time;
@@ -224,7 +225,7 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 			log.trace("send to queue {}", fromStringz(queue_name));
 
 		elapsed.start;
-		from_client.send(queue_name, result_buffer);
+		from_client.send(queue_name, result_buffer, send_more);
 		time = elapsed.stop;
 
 		if(mtf & m1)
@@ -464,7 +465,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 					strcpy(queue_name, fact_o[reply_to_id]);
 
-					send_result_and_logging_messages(queue_name, result_buffer, from_client);
+					send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 				}
 
 				if(agent_function_id >= 0 && arg_id > 0)
@@ -601,7 +602,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 					strcpy(queue_name, fact_o[reply_to_id]);
 
-					send_result_and_logging_messages(queue_name, result_buffer, from_client);
+					send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 				}
 
 				if(delete_subjects_id >= 0 && arg_id > 0)
@@ -634,7 +635,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 					strcpy(queue_name, fact_o[reply_to_id]);
 
-					send_result_and_logging_messages(queue_name, result_buffer, from_client);
+					send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 
 					//				uint* SET = az.getTripleStorage.getTriples(null, null, "45fd1447ef7a46c9ac08b73cddc776d4");
 					//				fact_tools.print_list_triple(SET);
@@ -843,7 +844,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 					strcpy(queue_name, fact_o[reply_to_id]);
 
-					send_result_and_logging_messages(queue_name, result_buffer, from_client);
+					send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 
 					//				uint* SET = az.getTripleStorage.getTriples(null, null, "45fd1447ef7a46c9ac08b73cddc776d4");
 					//				fact_tools.print_list_triple(SET);
@@ -1051,6 +1052,8 @@ private char[][char[]] load_props()
 		result["amqp_server_routingkey"] = "";
 		result["amqp_server_queue"] = "semargl";
 		result["amqp_server_vhost"] = "magnetico";
+		
+		result["zmq_point"] = "tcp://127.0.0.1:5555";	
 
 		result["dbus_semargl_service_name"] = "";
 		result["dbus_semargl_listen_from"] = "";
@@ -1327,7 +1330,7 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 
 	//				printf("try to send message\n");
 
-	send_result_and_logging_messages(queue_name, result_buffer, from_client);
+	send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 
 	//				printf("message successfully sent\n");
 }
@@ -1473,5 +1476,5 @@ private void delete_subjects_by_predicate(char* fact_s[], char* fact_p[], char* 
 
 	strcpy(queue_name, fact_o[reply_to_id]);
 
-	send_result_and_logging_messages(queue_name, result_buffer, from_client);
+	send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 }

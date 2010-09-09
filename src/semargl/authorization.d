@@ -753,8 +753,9 @@ class Authorization
 						if(strlen(result_buffer) > 10000)
 						{
 							strcpy(result_ptr, "}.\0");
-
-							send_result_and_logging_messages(queue_name, result_buffer, from_client);
+							
+							// отправляем multi-part message
+							send_result_and_logging_messages(queue_name, result_buffer, from_client, true); 
 
 							//							client.send(queue_name, result_buffer);
 
@@ -785,7 +786,7 @@ class Authorization
 
 		strcpy(queue_name, fact_o[reply_to_id]);
 
-		send_result_and_logging_messages(queue_name, result_buffer, from_client);
+		send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 
 		//		client.send(queue_name, result_buffer);
 
@@ -852,7 +853,7 @@ class Authorization
 		*(result_ptr - 1) = 0;
 
 		//		client.send(queue_name, result_buffer);
-		send_result_and_logging_messages(queue_name, result_buffer, from_client);
+		send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 
 		double time = elapsed.stop;
 		log.trace("get delegate assigners time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
@@ -956,7 +957,7 @@ class Authorization
 		*(result_ptr - 1) = 0;
 
 		//		client.send(queue_name, result_buffer);
-		send_result_and_logging_messages(queue_name, result_buffer, from_client);
+		send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 
 		double time = elapsed.stop;
 		log.trace("get delegators time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);

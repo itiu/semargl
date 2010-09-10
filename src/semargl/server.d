@@ -225,7 +225,17 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 			log.trace("send to queue {}", fromStringz(queue_name));
 
 		elapsed.start;
-		from_client.send(queue_name, result_buffer, send_more);
+		
+		int res = from_client.send(queue_name, result_buffer, send_more);
+						
+		if (res < 0)
+		{
+			Stdout.format("@#$%").newline;
+
+			log.trace("@#$%");
+			throw new Exception ("send_result_and_logging_messages: FAIL");
+		}
+		
 		time = elapsed.stop;
 
 		if(mtf & m1)

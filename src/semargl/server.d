@@ -230,9 +230,7 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 						
 		if (res < 0)
 		{
-			Stdout.format("@#$%").newline;
-
-			log.trace("@#$%");
+			log.trace("send_result_and_logging_messages: FAIL");
 			throw new Exception ("send_result_and_logging_messages: FAIL");
 		}
 		
@@ -281,7 +279,7 @@ public double total_time = 0; // total time, prepare message (ms)
 
 void get_message(byte* message, ulong message_size, mom_client from_client)
 {
-	//	log.trace("get message {}", msg[0 .. message_size]);
+	log.trace("get message from {}", from_client.getInfo ());
 	//  printf ("\nget message !%s!\n", message);
 	StopWatch* total_elapsed = new StopWatch();
 
@@ -315,7 +313,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 				writeToLog(layout("\r\n\r\n{:yyyy-MM-dd HH:mm:ss},{} INPUT\r\n", tm, dt.time.millis));
 				writeToLog(message_buffer);
 				time = elapsed.stop;
-				log.trace("logging input message, time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
+//				log.trace("logging input message, time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
 			}
 
 			if(*(message + message_size - 1) != '.')
@@ -442,7 +440,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 				}
 
-				//				log.trace("разбор сообщения закончен : uid = {}", getString(fact_s[0]));
+				log.trace("разбор сообщения закончен : uid = {}", getString(fact_s[0]));
 
 				bool
 						isCommandRecognized = delete_subjects_id > -1 || get_id > -1 || put_id > -1 || delete_subjects_by_predicate_id > -1 || get_authorization_rights_records_id > -1 || add_delegates_id > -1 || get_delegate_assigners_tree_id > -1 || get_delegators_records_id > -1 || agent_function_id > -1 || create_id > -1 || authorization_id > -1;

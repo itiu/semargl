@@ -30,7 +30,12 @@ bool stop_on_next_command = false;
 class autotest: mom_client
 {
 	char[] message_log_file_name;
-
+	
+	public char[] getInfo ()
+	{
+		return "autotest";
+	}
+	
 	this(char[] _message_log_file_name, long _count_repeat, bool _nocompare)
 	{
 		count_repeat = _count_repeat;

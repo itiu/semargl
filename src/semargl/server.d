@@ -55,8 +55,6 @@ private import semargl.cinfo;
 private import libzmq_client;
 private import libzmq_headers;
 
-
-
 private Authorization az = null;
 public char[][char[]] props;
 
@@ -74,7 +72,7 @@ private char[] set_text_color_blue = "\x1B[34m";
 private char[] all_attribute_off = "\x1B[0m";
 
 private final ulong m1 = 1;
-ulong mtf = 1;
+ulong mtf = 0;
 
 void main(char[][] args)
 {
@@ -169,7 +167,7 @@ void main(char[][] args)
 			thread = new Thread(&zmq_client.listener);
 			thread.start;
 			log.trace("start new thread, zeromq {:X4}", &thread);
-			Thread.sleep(0.250);			
+			Thread.sleep(0.250);
 		}
 
 		/*
@@ -225,15 +223,15 @@ void send_result_and_logging_messages(char* queue_name, char* result_buffer, mom
 			log.trace("send to queue {}", fromStringz(queue_name));
 
 		elapsed.start;
-		
+
 		int res = from_client.send(queue_name, result_buffer, send_more);
-						
-		if (res < 0)
+
+		if(res < 0)
 		{
 			log.trace("send_result_and_logging_messages: FAIL");
-			throw new Exception ("send_result_and_logging_messages: FAIL");
+			throw new Exception("send_result_and_logging_messages: FAIL");
 		}
-		
+
 		time = elapsed.stop;
 
 		if(mtf & m1)
@@ -279,7 +277,7 @@ public double total_time = 0; // total time, prepare message (ms)
 
 void get_message(byte* message, ulong message_size, mom_client from_client)
 {
-	log.trace("get message from {}", from_client.getInfo ());
+	log.trace("get message from {}", from_client.getInfo());
 	//  printf ("\nget message !%s!\n", message);
 	StopWatch* total_elapsed = new StopWatch();
 
@@ -313,7 +311,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 				writeToLog(layout("\r\n\r\n{:yyyy-MM-dd HH:mm:ss},{} INPUT\r\n", tm, dt.time.millis));
 				writeToLog(message_buffer);
 				time = elapsed.stop;
-//				log.trace("logging input message, time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
+				//				log.trace("logging input message, time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
 			}
 
 			if(*(message + message_size - 1) != '.')
@@ -869,7 +867,13 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 				// AUTHORIZE
 				if(authorization_id >= 0)
 				{
+					if(mtf & m1)
+						log.trace("authorize start...");
+
 					prepare_authorization_request(fact_s[], fact_p[], fact_o[], is_fact_in_object[], count_facts, from_client, elapsed);
+
+					if(mtf & m1)
+						log.trace("authorize start...ok");
 				}
 			}
 
@@ -897,14 +901,14 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 	} finally
 	{
-//		log.trace("status execute message : FINALLY");
+		//		log.trace("status execute message : FINALLY");
 		double time = total_elapsed.stop;
 
 		total_time += time;
 		//		az.getTripleStorage().print_stat();
 		az.getTripleStorage().release_all_lists();
 	}
-//	Stdout.format("status execute message : eXIT").newline;
+	//	Stdout.format("status execute message : eXIT").newline;
 }
 
 void remove_subject(char* s)
@@ -1060,8 +1064,8 @@ private char[][char[]] load_props()
 		result["amqp_server_routingkey"] = "";
 		result["amqp_server_queue"] = "semargl";
 		result["amqp_server_vhost"] = "magnetico";
-		
-		result["zmq_point"] = "tcp://127.0.0.1:5555";	
+
+		result["zmq_point"] = "tcp://127.0.0.1:5555";
 
 		result["dbus_semargl_service_name"] = "";
 		result["dbus_semargl_listen_from"] = "";
@@ -1119,7 +1123,8 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 	char* guardedElementId;
 	double time;
 
-	//	log.trace("prepare_authorization_request");
+	if(mtf & m1)
+		log.trace("prepare_authorization_request");
 
 	/* пример сообщения:
 	 <3516df90-522a-476a-9470-8293daf2014a><magnet-ontology#subject><magnet-ontology/authorization/functions#authorize>.
@@ -1177,7 +1182,8 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 		}
 	}
 
-	//	log.trace("prepare_authorization_request #1");
+	if(mtf & m1)
+		log.trace("prepare_authorization_request #1");
 
 	char* autz_elements;
 
@@ -1206,11 +1212,20 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 			targetRightType = RightType.DELETE;
 	}
 
+	if(mtf & m1)
+		log.trace("prepare_authorization_request: найдем делегатов");
+
 	Triple*[] hierarhical_delegates = null;
 	hierarhical_delegates = getDelegateAssignersTreeArray(user, az.getTripleStorage());
+	
+	if(mtf & m1)
+		log.trace("prepare_authorization_request: найдено делегатов: {}", hierarhical_delegates.length);
 
 	char*[] hierarhical_delegates_document_id = new char*[hierarhical_delegates.length];
 
+	if(mtf & m1)
+		log.trace("prepare_authorization_request: для каждого из делегатов, вычислим путь подразделений");	
+	
 	char*[][] hierarhical_departments_of_delegate = new char*[][hierarhical_delegates.length];
 	for(int ii = 0; ii < hierarhical_delegates.length; ii++)
 	{
@@ -1227,18 +1242,23 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 		}
 	}
 
-	//	log.trace("prepare_authorization_request #2");
+	if(mtf & m1)
+		log.trace("prepare_authorization_request #2");
 
 	char*[] hierarhical_departments = null;
 	hierarhical_departments = getDepartmentTreePathOfUser(user, az.getTripleStorage());
-	//				log.trace("function authorize: calculate department tree for this target, count={}", hierarhical_departments.length);
+
+	if(mtf & m1)
+		log.trace("function authorize: calculate department tree for this target, count={}", hierarhical_departments.length);
 
 	uint count_prepared_elements = 0;
 	uint count_authorized_doc = 0;
 	uint doc_pos = 0;
 	uint prev_doc_pos = 0;
 
-	//	log.trace("this request on authorization #1.1.1 {}, command_uid={}, command_len={}", targetRightType, getString (command_uid), strlen(command_uid));
+	if(mtf & m1)
+		log.trace("this request on authorization #1.1.1 {}, command_uid={}, command_len={}", targetRightType, getString(command_uid),
+				strlen(command_uid));
 
 	*result_ptr = '<';
 	strcpy(result_ptr + 1, command_uid);
@@ -1260,7 +1280,8 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 				az.getTripleStorage(), hierarhical_departments);
 	}
 
-	//	log.trace("prepare_authorization_request #3");
+	if(mtf & m1)
+		log.trace("prepare_authorization_request #3");
 
 	for(uint i = 0; true; i++)
 	{
@@ -1314,7 +1335,8 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 		}
 	}
 
-	//	log.trace("prepare_authorization_request #5");
+	if(mtf & m1)
+		log.trace("prepare_authorization_request #5");
 
 	double total_time_calculate_right = time_calculate_right.stop;
 

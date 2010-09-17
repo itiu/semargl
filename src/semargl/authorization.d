@@ -51,6 +51,10 @@ private import semargl.server;
 
 class Authorization
 {
+	private final ulong m1 = 1;
+	ulong mtf = 0;
+	
+	
 	private bool triples_in_memory = false;
 	private bool use_cache_for_TripleStorageOnMongodb = false;
 
@@ -674,37 +678,37 @@ class Authorization
 								if(start_set_marker < 1 && author_subsystem_element_id > 0 && strcmp(p1, AUTHOR_SUBSYSTEM_ELEMENT.ptr) == 0)
 								{
 									checked_patterns_cnt++;
-									is_match = is_match & strcmp(o1, fact_o[author_subsystem_element_id]) == 0;
+									is_match = is_match & (strcmp(o1, fact_o[author_subsystem_element_id]) == 0);
 								}
 								if(start_set_marker < 2 && target_subsystem_element_id > 0 && strcmp(p1, TARGET_SUBSYSTEM_ELEMENT.ptr) == 0)
 								{
 									checked_patterns_cnt++;
-									is_match = is_match & strcmp(o1, fact_o[target_subsystem_element_id]) == 0;
+									is_match = is_match & (strcmp(o1, fact_o[target_subsystem_element_id]) == 0);
 								}
-								if(start_set_marker < 3 && category_id > 0 && strcmp(p1, CATEGORY.ptr) == 0)
+								if(start_set_marker < 3 && (category_id > 0 && strcmp(p1, CATEGORY.ptr) == 0))
 								{
 									checked_patterns_cnt++;
-									is_match = is_match & strcmp(o1, fact_o[category_id]) == 0;
+									is_match = is_match & (strcmp(o1, fact_o[category_id]) == 0);
 								}
 								if(start_set_marker < 4 && author_subsystem_id > 0 && strcmp(p1, AUTHOR_SUBSYSTEM.ptr) == 0)
 								{
 									checked_patterns_cnt++;
-									is_match = is_match & strcmp(o1, fact_o[author_subsystem_id]) == 0;
+									is_match = is_match & (strcmp(o1, fact_o[author_subsystem_id]) == 0);
 								}
 								if(start_set_marker < 5 && target_subsystem_id > 0 && strcmp(p1, TARGET_SUBSYSTEM.ptr) == 0)
 								{
 									checked_patterns_cnt++;
-									is_match = is_match & strcmp(o1, fact_o[target_subsystem_id]) == 0;
+									is_match = is_match & (strcmp(o1, fact_o[target_subsystem_id]) == 0);
 								}
 								if(start_set_marker < 6 && author_system_id > 0 && strcmp(p1, AUTHOR_SYSTEM.ptr) == 0)
 								{
 									checked_patterns_cnt++;
-									is_match = is_match & strcmp(o1, fact_o[author_system_id]) == 0;
+									is_match = is_match & (strcmp(o1, fact_o[author_system_id]) == 0);
 								}
 								if(start_set_marker < 7 && target_system_id > 0 && strcmp(p1, TARGET_SYSTEM.ptr) == 0)
 								{
 									checked_patterns_cnt++;
-									is_match = is_match & strcmp(o1, fact_o[target_system_id]) == 0;
+									is_match = is_match & (strcmp(o1, fact_o[target_system_id]) == 0);
 								}
 
 							}
@@ -835,11 +839,13 @@ class Authorization
 		strcpy(result_ptr, result_data_header.ptr);
 		result_ptr += result_data_header.length;
 
-		void put_in_result(Triple* founded_delegate)
+		bool put_in_result(Triple* founded_delegate)
 		{
 			strcpy(result_ptr++, ",");
 			strcpy(result_ptr, founded_delegate.o);
 			result_ptr += strlen(founded_delegate.o);
+			
+			return true;
 		}
 
 		getDelegateAssignersForDelegate(fact_o[arg_id], ts, &put_in_result);

@@ -13,6 +13,9 @@ private import semargl.fact_tools;
 private import semargl.Log;
 private import trioplax.triple;
 
+private final ulong m1 = 1;
+ulong mtf = 0;
+
 /*
  * возвращает массив субьектов (s) вышестоящих подразделений по отношению к user   
  */
@@ -28,8 +31,8 @@ public char*[] getDepartmentTreePathOfUser(char* user, TripleStorage ts)
 	//	log.trace("getDepartmentTreePath #1 for user={}", getString(user));
 
 	iterator0 = ts.getTriples(user, MEMBER_OF.ptr, null);
-	triple_list_element* iterator0_FE = iterator0;  
-	
+	triple_list_element* iterator0_FE = iterator0;
+
 	//print_list_triple(iterator0);
 
 	if(iterator0 !is null)
@@ -57,11 +60,11 @@ public char*[] getDepartmentTreePathOfUser(char* user, TripleStorage ts)
 				result[count_result] = s;
 				count_result++;
 				next_branch = s;
-				ts.list_no_longer_required (iterator1_FE);
+				ts.list_no_longer_required(iterator1_FE);
 			}
 
 		}
-		ts.list_no_longer_required (iterator0_FE);
+		ts.list_no_longer_required(iterator0_FE);
 
 	}
 
@@ -71,18 +74,28 @@ public char*[] getDepartmentTreePathOfUser(char* user, TripleStorage ts)
 	return result;
 }
 
-/*
+/*	private final ulong m1 = 1;
+	ulong mtf = 1;
+
  * возвращает массив фактов (s) вышестоящих подразделений по отношению к delegate_id   
  */
 public Triple*[] getDelegateAssignersTreeArray(char* person_id, TripleStorage ts)
 {
 
-	Triple*[] delegates = new Triple*[20];
+	Triple*[] delegates = new Triple*[50];
 	uint result_cnt = 0;
 
-	void put_in_result(Triple* founded_delegate)
+	bool put_in_result(Triple* founded_delegate)
 	{
+		if(mtf & m1)
+			log.trace("проверим, есть ли этот делегат <{}><{}>\"{}\" в нашем списке", fromStringz (founded_delegate.s), fromStringz (founded_delegate.p), fromStringz (founded_delegate.o));
+		// проверим, есть ли этот делегат в нашем списке
+		for(int i = 0; i < delegates.length; i++)
+			if(delegates[i] == founded_delegate)
+				return false;
+
 		delegates[result_cnt++] = founded_delegate;
+		return true;
 	}
 
 	getDelegateAssignersForDelegate(person_id, ts, &put_in_result);
@@ -92,15 +105,17 @@ public Triple*[] getDelegateAssignersTreeArray(char* person_id, TripleStorage ts
 	return delegates;
 }
 
-public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts, void delegate(Triple* founed_delegate) process_delegate)
+public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts, bool delegate(Triple* founed_delegate) process_delegate)
 {
 	triple_list_element* delegates_facts = ts.getTriples(null, DELEGATION_DELEGATE.ptr, delegate_id);
 	triple_list_element* delegates_facts_FE = delegates_facts;
+
+	bool f_stop = false;
 	
 	if(delegates_facts !is null)
 	{
 		//log.trace("#2 gda");
-		while(delegates_facts !is null)
+		while(delegates_facts !is null && !f_stop)
 		{
 			//log.trace("#3 gda");
 			Triple* de_legate = delegates_facts.triple;
@@ -109,10 +124,10 @@ public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts,
 				char* subject = cast(char*) de_legate.s;
 				triple_list_element* owners_facts = ts.getTriples(subject, DELEGATION_OWNER.ptr, null);
 				triple_list_element* owners_facts_FE = owners_facts;
-				
+
 				if(owners_facts !is null)
 				{
-					while(owners_facts !is null)
+					while(owners_facts !is null && !f_stop)
 					{
 						Triple* owner = owners_facts.triple;
 						if(owner !is null)
@@ -126,12 +141,16 @@ public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts,
 							/*			  strcpy(result_ptr++, ",");
 							 strcpy(result_ptr, object);
 							 result_ptr += strlen(object);*/
-							process_delegate(owner);
+							if (process_delegate(owner) == false)
+							{
+								f_stop = true;
+								break;
+							}
 
 							triple_list_element* with_tree_facts = ts.getTriples(subject, DELEGATION_WITH_TREE.ptr, null);
 							triple_list_element* with_tree_facts_FE = with_tree_facts;
 							{
-								while(with_tree_facts !is null)
+								while(with_tree_facts !is null && !f_stop)
 								{
 									Triple* with_tree = with_tree_facts.triple;
 									if(with_tree !is null)
@@ -146,7 +165,7 @@ public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts,
 									}
 								}
 							}
-							ts.list_no_longer_required (with_tree_facts_FE);
+							ts.list_no_longer_required(with_tree_facts_FE);
 							owners_facts = null;
 						}
 						else
@@ -156,12 +175,12 @@ public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts,
 							//?cast(uint*) next_owner;
 						}
 					}
-					ts.list_no_longer_required (owners_facts_FE);
+					ts.list_no_longer_required(owners_facts_FE);
 				}
 			}
 			delegates_facts = delegates_facts.next_triple_list_element;
 		}
-		ts.list_no_longer_required (delegates_facts_FE);		
+		ts.list_no_longer_required(delegates_facts_FE);
 	}
 }
 
@@ -189,7 +208,7 @@ public bool is_subject_actual(char* subject, TripleStorage ts)
 			}
 			from_iter = from_iter.next_triple_list_element;
 		}
-		ts.list_no_longer_required (from_iter_FE);
+		ts.list_no_longer_required(from_iter_FE);
 	}
 
 	//	log.trace("#10");
@@ -210,7 +229,7 @@ public bool is_subject_actual(char* subject, TripleStorage ts)
 			}
 			to_iter = to_iter.next_triple_list_element;
 		}
-		ts.list_no_longer_required (to_iter_FE);
+		ts.list_no_longer_required(to_iter_FE);
 	}
 
 	//	log.trace("#20");	
@@ -306,7 +325,8 @@ public bool is_today_in_interval(char* from, char* to)
 	return true;
 }
 
-unittest {
+unittest
+{
 
 	Stdout.format("\n ::: TESTS START ::: ").newline;
 

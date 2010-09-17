@@ -26,7 +26,7 @@ void go()
 		int delta_count = all_count_messages - prev_count;
 		double delta_working_time = total_time - prev_total_time;
 
-		if(delta_count > 0 || ff == false)
+		if(delta_count > 0)// || ff == false)
 		{
 			Stdout.format(layout("{:yyyy-MM-dd HH:mm:ss} * {}, delta_working_time={}, cps={}, time usage={}", tm, all_count_messages, delta_working_time, delta_count / delta_working_time, delta_working_time/sleep_time*100)).newline;
 		}

@@ -78,10 +78,10 @@ ulong mtf = 0;
 
 void main(char[][] args)
 {
-        printf("Semargl commit=%s date=%s\n", myversion.hash.ptr, myversion.date.ptr);
-        log.trace("Semargl commit={} date={}", myversion.hash.ptr, myversion.date.ptr);
-        
-        char[] autotest_file = null;
+	printf("Semargl commit=%s date=%s\n", myversion.hash.ptr, myversion.date.ptr);
+	log.trace("Semargl commit={} date={}", myversion.hash.ptr, myversion.date.ptr);
+
+	char[] autotest_file = null;
 	long count_repeat = 1;
 	bool nocompare = false;
 	bool log_query = false;
@@ -898,11 +898,23 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 		log.trace("status execute message : SUCCESSFULLY\r\n");
 	} catch(Exception ex)
 	{
+		try
+		{
+			az.getTripleStorage().release_all_lists();
+		} catch(Exception ex1)
+		{
+
+		}
+
 		log.trace("Exception: {}", ex.msg);
 		log.trace("status execute message : NO GOOD\r\n");
 
 		if(apoptosis_mode == true)
+		{
+			log.trace("harakiri !!!");
+			cinfo_exit = true;
 			throw ex;
+		}
 
 	} finally
 	{
@@ -1222,15 +1234,15 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 
 	Triple*[] hierarhical_delegates = null;
 	hierarhical_delegates = getDelegateAssignersTreeArray(user, az.getTripleStorage());
-	
+
 	if(mtf & m1)
 		log.trace("prepare_authorization_request: найдено делегатов: {}", hierarhical_delegates.length);
 
 	char*[] hierarhical_delegates_document_id = new char*[hierarhical_delegates.length];
 
 	if(mtf & m1)
-		log.trace("prepare_authorization_request: для каждого из делегатов, вычислим путь подразделений");	
-	
+		log.trace("prepare_authorization_request: для каждого из делегатов, вычислим путь подразделений");
+
 	char*[][] hierarhical_departments_of_delegate = new char*[][hierarhical_delegates.length];
 	for(int ii = 0; ii < hierarhical_delegates.length; ii++)
 	{

@@ -1,7 +1,7 @@
 mongo_d_driver__hash=58ed682
 trioplax__hash=e76738c
 zeromq__hash=bcecdef
-rabbitmq_connector__hash=f0ae046
+rabbitmq_connector__hash=02524e3
 rabbitmq_d__hash=9322e2e
 
 username=itiu

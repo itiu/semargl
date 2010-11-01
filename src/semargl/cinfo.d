@@ -8,6 +8,7 @@ private import tango.text.locale.Locale;
 private import semargl.server;
 
 private Locale layout;
+public bool cinfo_exit = false;
 
 void go()
 {
@@ -17,8 +18,8 @@ void go()
 	double prev_total_time = 0;
 	double sleep_time = 3;
 	bool ff = false;
-
-	while(true)
+	
+	while(!cinfo_exit)
 	{
 		Thread.sleep(sleep_time);
 		auto tm = WallClock.now;
@@ -28,7 +29,7 @@ void go()
 
 		if(delta_count > 0)// || ff == false)
 		{
-			Stdout.format(layout("{:yyyy-MM-dd HH:mm:ss} * {}, delta_working_time={}, cps={}, time usage={}", tm, all_count_messages, delta_working_time, delta_count / delta_working_time, delta_working_time/sleep_time*100)).newline;
+			Stdout.format(layout("{:yyyy-MM-dd HH:mm:ss} * {}, {}, delta_working_time={}, cps={}, time usage={}", tm, all_count_messages, delta_count, delta_working_time, delta_count / delta_working_time, delta_working_time/sleep_time*100)).newline;
 		}
 
 		if(delta_count > 0)

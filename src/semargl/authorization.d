@@ -53,8 +53,7 @@ class Authorization
 {
 	private final ulong m1 = 1;
 	ulong mtf = 0;
-	
-	
+
 	private bool triples_in_memory = false;
 	private bool use_cache_for_TripleStorageOnMongodb = false;
 
@@ -188,6 +187,7 @@ class Authorization
 			}
 
 			ts.setPredicatesToS1PPOO(TARGET_SUBSYSTEM_ELEMENT, ELEMENT_ID, RIGHTS);
+			//			ts.setPredicatesToS1PPOO(AUTHORIZATION_ACL_NAMESPACE, TARGET_SUBSYSTEM_ELEMENT, RIGHTS);
 
 			ts.define_predicate_as_multiple(HAS_PART);
 			ts.set_log_query_mode(false);
@@ -495,15 +495,110 @@ class Authorization
 	public void getAuthorizationRightRecords(char*[] fact_s, char*[] fact_p, char*[] fact_o, uint count_facts, char* result_buffer,
 			mom_client from_client)
 	{
-		//@@@@@ 
-		//		ts.log_query = true;
-
 		log.trace("запрос на выборку записей прав");
 
+		int reply_to_id = 0;
+		char* command_uid = fact_s[0];
+
+		char* result_ptr = cast(char*) result_buffer;
 		auto elapsed = new StopWatch();
 		elapsed.start;
 
 		char* queue_name = cast(char*) (new char[40]);
+
+		if(triples_in_memory == false)
+		{
+			for(int i = 0; i < count_facts; i++)
+			{
+				if(strlen(fact_o[i]) > 0)
+				{
+					if(strcmp(fact_p[i], REPLY_TO.ptr) == 0)
+					{
+						reply_to_id = i;
+					}
+				}
+			}
+
+			char*[] s = new char*[count_facts];
+			char*[] p = new char*[count_facts];
+			char*[] o = new char*[count_facts];
+			//			char*[] read_predicates = ["mo/at/acl#atS\0".ptr, "mo/at/acl#atSs\0".ptr, "mo/at/acl#atSsE\0".ptr, "mo/at/acl#cat\0".ptr, "mo/at/acl#eId\0".ptr,
+			//					"mo/at/acl#rt\0".ptr, "mo/at/acl#tgS\0".ptr, "mo/at/acl#tgSs\0".ptr, "mo/at/acl#tgSsE\0".ptr];
+			char*[] read_predicates = ["mo/at/acl#rt\0".ptr];
+
+			short jj = 0;
+
+			{
+				for(int i = 0; i < count_facts; i++)
+				{
+					if(strcmp(fact_p[i], SET_FROM.ptr) == 0 || strcmp(fact_p[i], AUTHOR_SYSTEM.ptr) == 0 || strcmp(fact_p[i],
+							AUTHOR_SUBSYSTEM.ptr) == 0 || strcmp(fact_p[i], AUTHOR_SUBSYSTEM_ELEMENT.ptr) == 0 || strcmp(fact_p[i],
+							TARGET_SYSTEM.ptr) == 0 || strcmp(fact_p[i], TARGET_SUBSYSTEM.ptr) == 0 || strcmp(fact_p[i],
+							TARGET_SUBSYSTEM_ELEMENT.ptr) == 0 || strcmp(fact_p[i], CATEGORY.ptr) == 0 || strcmp(fact_p[i], ELEMENT_ID.ptr) == 0 || strcmp(
+							fact_p[i], REPLY_TO.ptr) == 0)
+					{
+						s[jj] = fact_s[i];
+						p[jj] = fact_p[i];
+						o[jj] = fact_o[i];
+						jj++;
+					}
+				}
+
+				s.length = jj - 1;
+				p.length = jj - 1;
+				o.length = jj - 1;
+				log.trace("~");
+				triple_list_element* result_list = ts.getTriples(s, p, o, read_predicates);
+				log.trace("~");
+
+				strcpy(queue_name, fact_o[reply_to_id]);
+
+				*result_ptr = '<';
+				strcpy(result_ptr + 1, command_uid);
+				result_ptr += strlen(command_uid) + 1;
+				strcpy(result_ptr, result_data_header_with_bracets.ptr);
+				result_ptr += result_data_header_with_bracets.length;
+
+				while(result_list !is null)
+				{
+					Triple* triple = result_list.triple;
+//					log.trace("# get_authorization_rights_records : triple = {:X4}", triple);
+
+					if(triple !is null)
+					{
+						char* s1 = cast(char*) triple.p;
+						char* p1 = cast(char*) triple.p;
+						char* o1 = cast(char*) triple.o;
+
+						strcpy(result_ptr++, "<");
+						strcpy(result_ptr, s1);
+						result_ptr += strlen(s1);
+						strcpy(result_ptr, "><");
+						result_ptr += 2;
+						strcpy(result_ptr, p1);
+						result_ptr += strlen(p1);
+						strcpy(result_ptr, ">\"");
+						result_ptr += 2;
+						strcpy(result_ptr, o1);
+						result_ptr += strlen(o1);
+						strcpy(result_ptr, "\".");
+						result_ptr += 2;
+					}
+					
+					result_list = result_list.next_triple_list_element;
+				}
+				strcpy(queue_name, fact_o[reply_to_id]);
+
+				send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
+
+				double time = elapsed.stop;
+				log.trace("get authorization rights records time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
+
+				return;
+			}
+		}
+		//@@@@@ 
+		//		ts.log_query = true;
 
 		int authorize_id = 0;
 		int from_id = 0;
@@ -516,10 +611,6 @@ class Authorization
 		int target_subsystem_element_id = 0;
 		int category_id = 0;
 		int elements_id = 0;
-		int reply_to_id = 0;
-
-		char* result_ptr = cast(char*) result_buffer;
-		char* command_uid = fact_s[0];
 
 		byte patterns_cnt = 0;
 
@@ -527,8 +618,8 @@ class Authorization
 		{
 			if(strlen(fact_o[i]) > 0)
 			{
-				//				log.trace("pattern predicate = '{}'. pattern object = '{}' with length = {}", 
-				//				 getString(fact_p[i]), getString(fact_o[i]), strlen(fact_o[i]));
+				log.trace("pattern predicate = '{}'. pattern object = '{}' with length = {}", getString(fact_p[i]), getString(fact_o[i]),
+						strlen(fact_o[i]));
 
 				if(strcmp(fact_p[i], SET_FROM.ptr) == 0)
 				{
@@ -588,43 +679,49 @@ class Authorization
 		byte start_set_marker = 0;
 		if(elements_id > 0)
 		{
-			//			log.trace("object = {}", getString(fact_o[elements_id]));
+			log.trace("@elements_id");
 			start_facts_set = ts.getTriples(null, ELEMENT_ID.ptr, fact_o[elements_id]);
-		}
-		else if(author_subsystem_element_id > 0)
-		{
-			start_set_marker = 1;
-
-			//			start_facts_set = ts.getTriples(null, null, fact_o[author_subsystem_element_id]);
-			start_facts_set = ts.getTriples(null, AUTHOR_SUBSYSTEM_ELEMENT.ptr, fact_o[author_subsystem_element_id]);
 		}
 		else if(target_subsystem_element_id > 0)
 		{
-			start_set_marker = 2;
+			log.trace("@target_subsystem_element_id");
+			start_set_marker = 1;
 			start_facts_set = ts.getTriples(null, null, fact_o[target_subsystem_element_id]);
+		}
+		else if(author_subsystem_element_id > 0)
+		{
+			log.trace("@author_subsystem_element_id");
+			start_set_marker = 2;
+			//			start_facts_set = ts.getTriples(null, null, fact_o[author_subsystem_element_id]);
+			start_facts_set = ts.getTriples(null, AUTHOR_SUBSYSTEM_ELEMENT.ptr, fact_o[author_subsystem_element_id]);
 		}
 		else if(category_id > 0)
 		{
+			log.trace("@category_id");
 			start_set_marker = 3;
 			start_facts_set = ts.getTriples(null, null, fact_o[category_id]);
 		}
 		else if(author_subsystem_id > 0)
 		{
+			log.trace("@category_id");
 			start_set_marker = 4;
 			start_facts_set = ts.getTriples(null, null, fact_o[author_subsystem_id]);
 		}
 		else if(target_subsystem_id > 0)
 		{
+			log.trace("@target_subsystem_id");
 			start_set_marker = 5;
 			start_facts_set = ts.getTriples(null, null, fact_o[target_subsystem_id]);
 		}
 		else if(author_system_id > 0)
 		{
+			log.trace("@author_system_id");
 			start_set_marker = 6;
 			start_facts_set = ts.getTriples(null, null, fact_o[author_system_id]);
 		}
 		else if(target_system_id > 0)
 		{
+			log.trace("@target_system_id");
 			start_set_marker = 7;
 			start_facts_set = ts.getTriples(null, null, fact_o[target_system_id]);
 		}
@@ -675,15 +772,15 @@ class Authorization
 								char* p1 = cast(char*) triple1.p;
 								char* o1 = cast(char*) triple1.o;
 
-								if(start_set_marker < 1 && author_subsystem_element_id > 0 && strcmp(p1, AUTHOR_SUBSYSTEM_ELEMENT.ptr) == 0)
-								{
-									checked_patterns_cnt++;
-									is_match = is_match & (strcmp(o1, fact_o[author_subsystem_element_id]) == 0);
-								}
-								if(start_set_marker < 2 && target_subsystem_element_id > 0 && strcmp(p1, TARGET_SUBSYSTEM_ELEMENT.ptr) == 0)
+								if(start_set_marker < 1 && target_subsystem_element_id > 0 && strcmp(p1, TARGET_SUBSYSTEM_ELEMENT.ptr) == 0)
 								{
 									checked_patterns_cnt++;
 									is_match = is_match & (strcmp(o1, fact_o[target_subsystem_element_id]) == 0);
+								}
+								if(start_set_marker < 2 && author_subsystem_element_id > 0 && strcmp(p1, AUTHOR_SUBSYSTEM_ELEMENT.ptr) == 0)
+								{
+									checked_patterns_cnt++;
+									is_match = is_match & (strcmp(o1, fact_o[author_subsystem_element_id]) == 0);
 								}
 								if(start_set_marker < 3 && (category_id > 0 && strcmp(p1, CATEGORY.ptr) == 0))
 								{
@@ -757,9 +854,9 @@ class Authorization
 						if(strlen(result_buffer) > 10000)
 						{
 							strcpy(result_ptr, "}.\0");
-							
+
 							// отправляем multi-part message
-							send_result_and_logging_messages(queue_name, result_buffer, from_client, true); 
+							send_result_and_logging_messages(queue_name, result_buffer, from_client, true);
 
 							//							client.send(queue_name, result_buffer);
 
@@ -844,7 +941,7 @@ class Authorization
 			strcpy(result_ptr++, ",");
 			strcpy(result_ptr, founded_delegate.o);
 			result_ptr += strlen(founded_delegate.o);
-			
+
 			return true;
 		}
 
@@ -903,9 +1000,9 @@ class Authorization
 		strcpy(result_ptr, result_data_header_with_bracets.ptr);
 		result_ptr += result_data_header_with_bracets.length;
 
-				log.trace("getDelegators:arg = s={}", getString(fact_s[arg_id]));
-				log.trace("getDelegators:arg = p={}", getString(fact_p[arg_id]));
-				log.trace("getDelegators:arg = o={}", getString(fact_o[arg_id]));
+		log.trace("getDelegators:arg = s={}", getString(fact_s[arg_id]));
+		log.trace("getDelegators:arg = p={}", getString(fact_p[arg_id]));
+		log.trace("getDelegators:arg = o={}", getString(fact_o[arg_id]));
 
 		triple_list_element* delegators_facts = ts.getTriples(null, DELEGATION_DELEGATE.ptr, fact_o[arg_id]);
 
@@ -919,16 +1016,15 @@ class Authorization
 				log.trace("delegator = {}, count={}", getString(subject), ts.get_count_form_list_triple(delegators_facts));
 
 				triple_list_element* delegate_records = ts.getTriples(subject, null, null);
-				
 
 				while(delegate_records !is null)
 				{
-					
+
 					Triple* fact_of_record = delegate_records.triple;
 
 					log.trace("		facts = <{}><{}><{}>", getString(fact_of_record.s), getString(fact_of_record.p), getString(
 							fact_of_record.o));
-					
+
 					*result_ptr = '<';
 					strcpy(result_ptr + 1, fact_of_record.s);
 					result_ptr += strlen(fact_of_record.s) + 1;

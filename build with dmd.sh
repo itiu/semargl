@@ -2,6 +2,7 @@ git_host=gh
 cp -r src/* build/src
 
 rm build/src/test.d
+rm *.log
 
 git log -1 --pretty=format:"module myversion; public static char[] author=cast(char[])\"%an\"; public static char[] date=cast(char[])\"%ad\"; public static char[] hash=cast(char[])\"%h\";">myversion.d
 

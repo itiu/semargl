@@ -2,7 +2,7 @@ authorization agent prototype for magnetico
 
 build:
 + linux ubuntu 10.4 32bit
-+ dmd 1.63
++ dmd 1.64
 + tango 0.99.9
 
 or

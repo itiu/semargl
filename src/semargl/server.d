@@ -55,6 +55,8 @@ private import semargl.cinfo;
 private import libzmq_client;
 private import libzmq_headers;
 
+private import myversion;
+
 private Authorization az = null;
 public char[][char[]] props;
 
@@ -76,7 +78,10 @@ ulong mtf = 0;
 
 void main(char[][] args)
 {
-	char[] autotest_file = null;
+        printf("Semargl commit=%s date=%s\n", myversion.hash.ptr, myversion.date.ptr);
+        log.trace("Semargl commit={} date={}", myversion.hash.ptr, myversion.date.ptr);
+        
+        char[] autotest_file = null;
 	long count_repeat = 1;
 	bool nocompare = false;
 	bool log_query = false;

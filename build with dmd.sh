@@ -1,24 +1,5 @@
 git_host=gh
-mkdir build
-rm -r build/src
-mkdir build/src
 cp -r src/* build/src
-
-mdir=$PWD
-
-cd build
-
-cd ..
-cd ..
-cp -r trioplax/src/* semargl/build/src
-cp -r zeromq-connector/src/* semargl/build/src
-cp -r rabbitmq-connector/src/* semargl/build/src
-cp -r mongo-d-driver/src/* semargl/build/src
-cp -r rabbitmq-d/src/* semargl/build/src
-
-echo $mdir
-
-cd $mdir
 
 rm build/src/test.d
 

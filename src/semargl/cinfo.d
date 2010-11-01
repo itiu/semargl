@@ -29,7 +29,15 @@ void go()
 
 		if(delta_count > 0)// || ff == false)
 		{
-			Stdout.format(layout("{:yyyy-MM-dd HH:mm:ss} * {}, {}, delta_working_time={}, cps={}, time usage={}", tm, all_count_messages, delta_count, delta_working_time, delta_count / delta_working_time, delta_working_time/sleep_time*100)).newline;
+			wchar[] sdc = new wchar[delta_count];
+			
+			for (int i = 0; i < delta_count; i++)
+			{
+				sdc[i] = 'ᚙ';
+			}
+			
+			Stdout.format(layout("{:yyyy-MM-dd HH:mm:ss} {}, time={}, cps={}, load={}%, processed={}", tm, all_count_messages, delta_working_time, delta_count / delta_working_time, delta_working_time/sleep_time*100, delta_count)).newline;
+			Stdout.format(layout("processed: {}", sdc)).newline;
 		}
 
 		if(delta_count > 0)

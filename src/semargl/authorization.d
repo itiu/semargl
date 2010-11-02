@@ -522,9 +522,10 @@ class Authorization
 			char*[] s = new char*[count_facts];
 			char*[] p = new char*[count_facts];
 			char*[] o = new char*[count_facts];
-			//			char*[] read_predicates = ["mo/at/acl#atS\0".ptr, "mo/at/acl#atSs\0".ptr, "mo/at/acl#atSsE\0".ptr, "mo/at/acl#cat\0".ptr, "mo/at/acl#eId\0".ptr,
-			//					"mo/at/acl#rt\0".ptr, "mo/at/acl#tgS\0".ptr, "mo/at/acl#tgSs\0".ptr, "mo/at/acl#tgSsE\0".ptr];
-			char*[] read_predicates = ["mo/at/acl#rt\0".ptr];
+			char*[] read_predicates = ["mo/at/acl#atS\0".ptr, "mo/at/acl#atSs\0".ptr, "mo/at/acl#atSsE\0".ptr, "mo/at/acl#cat\0".ptr,
+			"mo/at/acl#rt\0".ptr, "mo/at/acl#tgS\0".ptr, "mo/at/acl#tgSs\0".ptr, "mo/at/acl#tgSsE\0".ptr, "mo/at/acl#dtF\0".ptr, "mo/at/acl#dtT\0".ptr, "mo/at/acl#eId\0".ptr];
+
+//			char*[] read_predicates = ["mo/at/acl#atS\0".ptr];
 
 			short jj = 0;
 
@@ -547,9 +548,7 @@ class Authorization
 				s.length = jj - 1;
 				p.length = jj - 1;
 				o.length = jj - 1;
-				log.trace("~");
 				triple_list_element* result_list = ts.getTriples(s, p, o, read_predicates);
-				log.trace("~");
 
 				strcpy(queue_name, fact_o[reply_to_id]);
 
@@ -566,7 +565,7 @@ class Authorization
 
 					if(triple !is null)
 					{
-						char* s1 = cast(char*) triple.p;
+						char* s1 = cast(char*) triple.s;
 						char* p1 = cast(char*) triple.p;
 						char* o1 = cast(char*) triple.o;
 
@@ -587,6 +586,15 @@ class Authorization
 					
 					result_list = result_list.next_triple_list_element;
 				}
+
+				strcpy(result_ptr, "}.<");
+				result_ptr += 3;
+				strcpy(result_ptr, command_uid);
+				result_ptr += strlen(command_uid);
+				strcpy(result_ptr, result_state_ok_header.ptr);
+				result_ptr += result_state_ok_header.length;
+				*(result_ptr - 1) = 0;
+				
 				strcpy(queue_name, fact_o[reply_to_id]);
 
 				send_result_and_logging_messages(queue_name, result_buffer, from_client, false);

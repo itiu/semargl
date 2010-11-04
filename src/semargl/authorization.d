@@ -527,27 +527,30 @@ class Authorization
 
 //			char*[] read_predicates = ["mo/at/acl#atS\0".ptr];
 
-			short jj = 0;
 
 			{
+				short jj = 0;
 				for(int i = 0; i < count_facts; i++)
 				{
+//					log.trace("arg: [{}][{}][{}]", getString (fact_s[i]), getString (fact_p[i]), getString (fact_o[i]));
+					
 					if(strcmp(fact_p[i], SET_FROM.ptr) == 0 || strcmp(fact_p[i], AUTHOR_SYSTEM.ptr) == 0 || strcmp(fact_p[i],
 							AUTHOR_SUBSYSTEM.ptr) == 0 || strcmp(fact_p[i], AUTHOR_SUBSYSTEM_ELEMENT.ptr) == 0 || strcmp(fact_p[i],
 							TARGET_SYSTEM.ptr) == 0 || strcmp(fact_p[i], TARGET_SUBSYSTEM.ptr) == 0 || strcmp(fact_p[i],
-							TARGET_SUBSYSTEM_ELEMENT.ptr) == 0 || strcmp(fact_p[i], CATEGORY.ptr) == 0 || strcmp(fact_p[i], ELEMENT_ID.ptr) == 0 || strcmp(
-							fact_p[i], REPLY_TO.ptr) == 0)
+							TARGET_SUBSYSTEM_ELEMENT.ptr) == 0 || strcmp(fact_p[i], CATEGORY.ptr) == 0 || strcmp(fact_p[i], ELEMENT_ID.ptr) == 0)
 					{
+//					log.trace("add {}", jj);
 						s[jj] = fact_s[i];
 						p[jj] = fact_p[i];
 						o[jj] = fact_o[i];
 						jj++;
 					}
 				}
+//				jj--;
 
-				s.length = jj - 1;
-				p.length = jj - 1;
-				o.length = jj - 1;
+				s.length = jj;
+				p.length = jj;
+				o.length = jj;
 				triple_list_element* result_list = ts.getTriples(s, p, o, read_predicates);
 
 				strcpy(queue_name, fact_o[reply_to_id]);

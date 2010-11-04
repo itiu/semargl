@@ -1,5 +1,5 @@
 mongo_d_driver__hash=58ed682
-trioplax__hash=c9c8a8f
+trioplax__hash=1599b01
 zeromq__hash=76c6a8b
 rabbitmq_connector__hash=02524e3
 rabbitmq_d__hash=9322e2e

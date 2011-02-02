@@ -48,14 +48,26 @@ public Counts calculate_count_facts(char* message, ulong message_size)
 {
 	Counts res;
 
+	bool is_open_quotes = false;
+
 	for(int i = message_size; i > 0; i--)
 	{
 		char* cur_char = cast(char*) (message + i);
 
+//		if(*cur_char == '"')
+//		{
+//			if(is_open_quotes == false)
+//				is_open_quotes = true;
+//			else
+//			{
+//				is_open_quotes = false;
+//			}
+//		}
+		
 		if(*cur_char == '.')
 			res.facts++;
 
-		if(*cur_char == '{')
+		if(*cur_char == '{' && !is_open_quotes)
 			res.open_brakets++;
 	}
 
@@ -65,7 +77,10 @@ public Counts calculate_count_facts(char* message, ulong message_size)
 public uint extract_facts_from_message(char* message, ulong message_size, Counts counts, char* fact_s[], char* fact_p[], char* fact_o[],
 		uint is_fact_in_object[])
 {
-//	log.trace("extract_facts_from_message ... facts.size={}, counts.open_brakets={}", counts.facts, counts.open_brakets);
+	version(trace)
+	{
+		log.trace("extract_facts_from_message ... facts.size={}, counts.open_brakets={}", counts.facts, counts.open_brakets);
+	}
 
 	byte count_open_brakets = 0;
 	byte count_facts = 0;
@@ -77,8 +92,12 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 
 	for(int i = 0; i < message_size; i++)
 	{
-//		log.trace("i = {}, count_facts={}, count_open_brakets={}, count_fact_fragment={}", i, count_facts, count_open_brakets, count_fact_fragment);
-		
+		version(trace1)
+		{
+			log.trace("i = {}, count_facts={}, count_open_brakets={}, count_fact_fragment={}", i, count_facts, count_open_brakets,
+					count_fact_fragment);
+		}
+
 		char* cur_char_ptr = message + i;
 		char cur_char = *cur_char_ptr;
 
@@ -92,7 +111,10 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 				*cur_char_ptr = 0;
 			}
 		}
-				
+
+//		if (is_open_quotes)
+//			continue;
+		
 		if(cur_char == '{')
 		{
 			count_open_brakets++;
@@ -114,7 +136,7 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 
 				fact_s[count_facts] = cur_char_ptr + 1;
 			}
-			
+
 			if(count_fact_fragment == 1)
 			{
 				fact_p[count_facts] = cur_char_ptr + 1;
@@ -150,7 +172,11 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 		//			}
 	}
 
-//	log.trace("extract_facts_from_message ... ok");
+	version(trace)
+	{
+		log.trace("extract_facts_from_message ... ok");
+	}
+
 	/*
 	 Stdout.format("extract_facts_from_message ... ok").newline;
 

@@ -49,6 +49,8 @@ private import semargl.Category;
 
 private import semargl.server;
 
+private import semargl.condition;
+
 class Authorization
 {
 	private final ulong m1 = 1;
@@ -256,7 +258,8 @@ class Authorization
 
 			//			ts.log_query = true;
 			ts.print_stat();
-		} catch(IndexException ex)
+		}
+		catch(IndexException ex)
 		{
 			if(ex.errCode == errorCode.short_order_is_full)
 			{
@@ -296,7 +299,8 @@ class Authorization
 			log.trace("wait to exit");
 
 			throw ex;
-		} catch(Exception ex)
+		}
+		catch(Exception ex)
 		{
 			throw ex;
 		}
@@ -475,6 +479,14 @@ class Authorization
 			return true;
 		}
 
+		foreach(condition; conditions)
+		{
+			if(calculate_condition(condition, iterator_facts_of_document, hierarhical_departments) == true)
+			{
+				return true;
+			}
+		}
+
 		if(isAdmin)
 		{
 			if(f_authorization_trace)
@@ -523,30 +535,30 @@ class Authorization
 			char*[] p = new char*[count_facts];
 			char*[] o = new char*[count_facts];
 			char*[] read_predicates = ["mo/at/acl#atS\0".ptr, "mo/at/acl#atSs\0".ptr, "mo/at/acl#atSsE\0".ptr, "mo/at/acl#cat\0".ptr,
-			"mo/at/acl#rt\0".ptr, "mo/at/acl#tgS\0".ptr, "mo/at/acl#tgSs\0".ptr, "mo/at/acl#tgSsE\0".ptr, "mo/at/acl#dtF\0".ptr, "mo/at/acl#dtT\0".ptr, "mo/at/acl#eId\0".ptr];
+					"mo/at/acl#rt\0".ptr, "mo/at/acl#tgS\0".ptr, "mo/at/acl#tgSs\0".ptr, "mo/at/acl#tgSsE\0".ptr, "mo/at/acl#dtF\0".ptr,
+					"mo/at/acl#dtT\0".ptr, "mo/at/acl#eId\0".ptr];
 
-//			char*[] read_predicates = ["mo/at/acl#atS\0".ptr];
-
+			//			char*[] read_predicates = ["mo/at/acl#atS\0".ptr];
 
 			{
 				short jj = 0;
 				for(int i = 0; i < count_facts; i++)
 				{
-//					log.trace("arg: [{}][{}][{}]", getString (fact_s[i]), getString (fact_p[i]), getString (fact_o[i]));
-					
+					//					log.trace("arg: [{}][{}][{}]", getString (fact_s[i]), getString (fact_p[i]), getString (fact_o[i]));
+
 					if(strcmp(fact_p[i], SET_FROM.ptr) == 0 || strcmp(fact_p[i], AUTHOR_SYSTEM.ptr) == 0 || strcmp(fact_p[i],
 							AUTHOR_SUBSYSTEM.ptr) == 0 || strcmp(fact_p[i], AUTHOR_SUBSYSTEM_ELEMENT.ptr) == 0 || strcmp(fact_p[i],
 							TARGET_SYSTEM.ptr) == 0 || strcmp(fact_p[i], TARGET_SUBSYSTEM.ptr) == 0 || strcmp(fact_p[i],
 							TARGET_SUBSYSTEM_ELEMENT.ptr) == 0 || strcmp(fact_p[i], CATEGORY.ptr) == 0 || strcmp(fact_p[i], ELEMENT_ID.ptr) == 0)
 					{
-//					log.trace("add {}", jj);
+						//					log.trace("add {}", jj);
 						s[jj] = fact_s[i];
 						p[jj] = fact_p[i];
 						o[jj] = fact_o[i];
 						jj++;
 					}
 				}
-//				jj--;
+				//				jj--;
 
 				s.length = jj;
 				p.length = jj;
@@ -564,7 +576,7 @@ class Authorization
 				while(result_list !is null)
 				{
 					Triple* triple = result_list.triple;
-//					log.trace("# get_authorization_rights_records : triple = {:X4}", triple);
+					//					log.trace("# get_authorization_rights_records : triple = {:X4}", triple);
 
 					if(triple !is null)
 					{
@@ -586,7 +598,7 @@ class Authorization
 						strcpy(result_ptr, "\".");
 						result_ptr += 2;
 					}
-					
+
 					result_list = result_list.next_triple_list_element;
 				}
 
@@ -597,7 +609,7 @@ class Authorization
 				strcpy(result_ptr, result_state_ok_header.ptr);
 				result_ptr += result_state_ok_header.length;
 				*(result_ptr - 1) = 0;
-				
+
 				strcpy(queue_name, fact_o[reply_to_id]);
 
 				send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
@@ -1011,9 +1023,12 @@ class Authorization
 		strcpy(result_ptr, result_data_header_with_bracets.ptr);
 		result_ptr += result_data_header_with_bracets.length;
 
-		log.trace("getDelegators:arg = s={}", getString(fact_s[arg_id]));
-		log.trace("getDelegators:arg = p={}", getString(fact_p[arg_id]));
-		log.trace("getDelegators:arg = o={}", getString(fact_o[arg_id]));
+		version(trace)
+		{
+			log.trace("getDelegators:arg = s={}", getString(fact_s[arg_id]));
+			log.trace("getDelegators:arg = p={}", getString(fact_p[arg_id]));
+			log.trace("getDelegators:arg = o={}", getString(fact_o[arg_id]));
+		}
 
 		triple_list_element* delegators_facts = ts.getTriples(null, DELEGATION_DELEGATE.ptr, fact_o[arg_id]);
 
@@ -1024,7 +1039,10 @@ class Authorization
 			if(delegator !is null)
 			{
 				char* subject = cast(char*) delegator.s;
-				log.trace("delegator = {}, count={}", getString(subject), ts.get_count_form_list_triple(delegators_facts));
+				version(trace)
+				{
+					log.trace("delegator = {}, count={}", getString(subject), ts.get_count_form_list_triple(delegators_facts));
+				}
 
 				triple_list_element* delegate_records = ts.getTriples(subject, null, null);
 
@@ -1033,8 +1051,11 @@ class Authorization
 
 					Triple* fact_of_record = delegate_records.triple;
 
-					log.trace("		facts = <{}><{}><{}>", getString(fact_of_record.s), getString(fact_of_record.p), getString(
-							fact_of_record.o));
+					version(trace)
+					{
+						log.trace("		facts = <{}><{}><{}>", getString(fact_of_record.s), getString(fact_of_record.p), getString(
+								fact_of_record.o));
+					}
 
 					*result_ptr = '<';
 					strcpy(result_ptr + 1, fact_of_record.s);
@@ -1073,7 +1094,11 @@ class Authorization
 		send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
 
 		double time = elapsed.stop;
-		log.trace("get delegators time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
+
+		version(trace)
+		{
+			log.trace("get delegators time = {:d6} ms. ( {:d6} sec.)", time * 1000, time);
+		}
 		//		log.trace("result:{} \nsent to:{}", getString(result_buffer), getString(queue_name));
 
 	}

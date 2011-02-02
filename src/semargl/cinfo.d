@@ -48,4 +48,5 @@ void go()
 		prev_count = all_count_messages;
 		prev_total_time = total_time;
 	}
+	Stdout.format("exit form thread cinfo").newline;		
 }

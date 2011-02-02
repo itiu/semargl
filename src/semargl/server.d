@@ -57,6 +57,9 @@ private import libzmq_headers;
 
 private import myversion;
 
+private import tango.text.json.Json;
+private import semargl.condition;
+
 private Authorization az = null;
 public char[][char[]] props;
 
@@ -139,6 +142,8 @@ void main(char[][] args)
 	if(log_query)
 		az.getTripleStorage().set_log_query_mode(true);
 
+	load_mandats(az.getTripleStorage());
+
 	if(autotest_file is null)
 	{
 		log.trace("no autotest mode");
@@ -172,6 +177,7 @@ void main(char[][] args)
 			thread = new Thread(&zmq_client.listener);
 			thread.start;
 			log.trace("start new thread, zeromq {:X4}", &thread);
+
 			Thread.sleep(0.250);
 		}
 
@@ -343,11 +349,17 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 			if(*(message + 0) == '<' && *(message + (message_size - 1)) == '.')
 			{
-				//				log.trace("разбор сообщения");
+				version(trace)
+				{
+					log.trace("разбор сообщения");
+				}
 
 				Counts count_elements = calculate_count_facts(cast(char*) message, message_size);
 
-				//				log.trace("facts = {}, open_brakets = {}", count_elements.facts, count_elements.open_brakets);
+				version(trace)
+				{
+					log.trace("facts = {}, open_brakets = {}", count_elements.facts, count_elements.open_brakets);
+				}
 
 				fact_s = new char*[count_elements.facts];
 				fact_p = new char*[count_elements.facts];
@@ -357,7 +369,11 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 				int count_facts = extract_facts_from_message(cast(char*) message, message_size, count_elements, fact_s, fact_p, fact_o,
 						is_fact_in_object);
 
-				//				log.trace("count_facts = {}", count_facts);
+				version(trace)
+				{
+					log.trace("count_facts = {}", count_facts);
+				}
+
 				// 				
 				// замапим предикаты фактов на конкретные переменные put_id, arg_id
 				int authorization_id = -1;
@@ -375,53 +391,78 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 				for(int i = 0; i < count_facts; i++)
 				{
-					//					log.trace("look triple <{}><{}><{}>", getString(cast(char*) fact_s[i]), getString(cast(char*) fact_p[i]), getString(
-					//							cast(char*) fact_o[i]));
+					version(trace)
+					{
+						log.trace("look triple <{}><{}><{}>", getString(cast(char*) fact_s[i]), getString(cast(char*) fact_p[i]),
+								getString(cast(char*) fact_o[i]));
+					}
 
 					if(strcmp(fact_p[i], SUBJECT.ptr) == 0)
 					{
-						//log.trace("#1");
 
 						if(authorization_id < 0 && strcmp(fact_o[i], AUTHORIZE.ptr) == 0)
 						{
-							//log.trace("#2");
 							authorization_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(put_id < 0 && strcmp(fact_o[i], PUT.ptr) == 0)
 						{
 							put_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(delete_subjects_by_predicate_id < 0 && strcmp(fact_o[i], DELETE_SUBJECTS_BY_PREDICATE.ptr) == 0)
 						{
 							delete_subjects_by_predicate_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(get_id < 0 && strcmp(fact_o[i], GET.ptr) == 0)
 						{
 							get_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(delete_subjects_id < 0 && strcmp(fact_o[i], DELETE_SUBJECTS.ptr) == 0)
 						{
 							delete_subjects_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(get_delegate_assigners_tree_id < 0 && strcmp(fact_o[i], GET_DELEGATE_ASSIGNERS_TREE.ptr) == 0)
 						{
 							get_delegate_assigners_tree_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(get_delegators_records_id < 0 && strcmp(fact_o[i], GET_DELEGATORS_RECORDS.ptr) == 0)
 						{
 							get_delegators_records_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(get_id < 0 && strcmp(fact_o[i], GET_AUTHORIZATION_RIGHT_RECORDS.ptr) == 0)
 						{
 							get_authorization_rights_records_id = i;
-							//							log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found comand {}, id ={} ", getString(fact_o[i]), i);
+							}
 						}
 						else if(put_id < 0 && strcmp(fact_o[i], "magnet-ontology#agent_function") == 0)
 						{
@@ -429,7 +470,10 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 						}
 						else if(put_id < 0 && strcmp(fact_o[i], CREATE.ptr) == 0)
 						{
-							//							log.trace("found tag {}, id ={} ", getString(fact_o[i]), i);
+							version(trace)
+							{
+								log.trace("found tag {}, id ={} ", getString(fact_o[i]), i);
+							}
 							create_id = i;
 							put_id = i;
 						}
@@ -438,7 +482,10 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 					else if(arg_id < 0 && strcmp(fact_p[i], FUNCTION_ARGUMENT.ptr) == 0)
 					{
 						arg_id = i;
-						//						log.trace("found tag {}, id ={} ", getString(fact_p[i]), i);
+						version(trace)
+						{
+							log.trace("found tag {}, id ={} ", getString(fact_p[i]), i);
+						}
 					}
 
 				}
@@ -682,11 +729,17 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 					// найдем триплет с elementId
 					int element_id = -1;
+					int condition_id = -1;
 					for(int i = 0; i < count_facts; i++)
 					{
 						if(strcmp(ELEMENT_ID.ptr, fact_p[i]) == 0)
 						{
 							element_id = i;
+							break;
+						}
+						if(strcmp("condition".ptr, fact_p[i]) == 0)
+						{
+							condition_id = i;
 							break;
 						}
 					}
@@ -814,16 +867,71 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 								try
 								{
 									az.getTripleStorage.addTriple(getString(fact_s[i]), getString(fact_p[i]), getString(fact_o[i]));
-								} catch(IndexException ex)
+								}
+								catch(IndexException ex)
 								{
 									throw new Exception("message - add triple");
 								}
-							} catch(Exception ex)
+							}
+							catch(Exception ex)
 							{
 								log.trace("failed command add triple <{}><{}>\"{}\"", getString(cast(char*) fact_s[i]), getString(
 										cast(char*) fact_p[i]), getString(cast(char*) fact_o[i]));
 							}
 						}
+					}
+
+					if(condition_id > 0)
+					{
+						log.trace("condition found !!!, reload mandats");
+						load_mandats(az.getTripleStorage ());
+//						
+//						char* qq = fact_o[condition_id];
+//
+//						char* ptr = qq;
+//						while(*ptr != 0)
+//						{
+//							if(*ptr == ')')
+//								*ptr = '}';
+//							if(*ptr == '(')
+//								*ptr = '{';
+//							if(*ptr == '\'')
+//								*ptr = '"';
+//							ptr++;
+//						}
+//
+//						log.trace("qq={}", getString(qq));
+//
+//						try
+//						{
+//							// {Null, String, RawString, Number, Object, Array, True, False};
+//							Json!(char) json = new Json!(char);
+//							json.parse(getString(qq));
+//
+//							log.trace("json.value.type: {}", json.value.type);
+//							log.trace("json.value.object: {}", json.value.toObject);
+//
+//							auto atts = json.value.toObject.attributes;
+//
+//							Json!(char).JsonValue* condt = json.value.toObject.value("condition");
+//							log.trace("condt = {}", condt);
+//
+//							foreach(key, value; atts)
+//							{
+//								log.trace("json.value.object.att: {}:{}", key, value);
+//
+//								//if 
+//
+//							}
+//
+//							//							calculate_condition(null, condt);
+//							//							auto atts = json.value.toObject.attributes;
+//						}
+//						catch(Exception ex)
+//						{
+//							log.trace("invalid json: {}", ex.msg);
+//
+//						}
 					}
 
 					time = elapsed.stop;
@@ -896,12 +1004,14 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 		}
 
 		log.trace("status execute message : SUCCESSFULLY\r\n");
-	} catch(Exception ex)
+	}
+	catch(Exception ex)
 	{
 		try
 		{
 			az.getTripleStorage().release_all_lists();
-		} catch(Exception ex1)
+		}
+		catch(Exception ex1)
 		{
 
 		}
@@ -916,7 +1026,8 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 			throw ex;
 		}
 
-	} finally
+	}
+	finally
 	{
 		//		log.trace("status execute message : FINALLY");
 		double time = total_elapsed.stop;
@@ -1262,11 +1373,11 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 	if(mtf & m1)
 		log.trace("prepare_authorization_request #2");
 
-	char*[] hierarhical_departments = null;
-	hierarhical_departments = getDepartmentTreePathOfUser(user, az.getTripleStorage());
+	char*[] hierarhical_departments_of_user = null;
+	hierarhical_departments_of_user = getDepartmentTreePathOfUser(user, az.getTripleStorage());
 
 	if(mtf & m1)
-		log.trace("function authorize: calculate department tree for this target, count={}", hierarhical_departments.length);
+		log.trace("function authorize: calculate department tree for this target, count={}", hierarhical_departments_of_user.length);
 
 	uint count_prepared_elements = 0;
 	uint count_authorized_doc = 0;
@@ -1287,14 +1398,14 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 	time_calculate_right.start;
 
 	//	вычислим, админ ли user
-	bool isAdmin = semargl.scripts.S01UserIsAdmin.calculate(user, az.getTripleStorage(), hierarhical_departments);
+	bool isAdmin = semargl.scripts.S01UserIsAdmin.calculate(user, az.getTripleStorage(), hierarhical_departments_of_user);
 
 	//	вычислим, админ ли каждый из иерархии делегатов
 	bool is_admin_of_hierarhical_delegates[] = new bool[hierarhical_delegates.length];
 	for(int ii = 0; ii < hierarhical_delegates.length; ii++)
 	{
 		is_admin_of_hierarhical_delegates[ii] = semargl.scripts.S01UserIsAdmin.calculate(hierarhical_delegates[ii].o,
-				az.getTripleStorage(), hierarhical_departments);
+				az.getTripleStorage(), hierarhical_departments_of_user);
 	}
 
 	if(mtf & m1)
@@ -1319,7 +1430,7 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 			//			log.trace("prepare_authorization_request #4 {}", getString (guardedElementId));
 
 			bool calculatedRight = calculate_right_according_to_delegation(fact_o[category_id], guardedElementId, targetRightType,
-					hierarhical_departments, isAdmin, hierarhical_delegates, hierarhical_delegates_document_id,
+					hierarhical_departments_of_user, isAdmin, hierarhical_delegates, hierarhical_delegates_document_id,
 					hierarhical_departments_of_delegate, 0);
 
 			if(calculatedRight == true)

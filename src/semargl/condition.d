@@ -9,6 +9,8 @@ private import semargl.Log;
 private import semargl.Predicates;
 private import tango.stdc.string;
 private import semargl.fact_tools;
+private import semargl.RightTypeDef;
+private import semargl.script_util;
 
 byte asObject = 0;
 byte asArray = 1;
@@ -65,6 +67,7 @@ Element json2Element(Json!(char).JsonValue* je, Element oe = null)
 		foreach(key, value; atts)
 		{
 			char[] key_copy = new char[key.length];
+			
 			key_copy[] = key[];
 			oe.pairs[key_copy] = json2Element(value);
 		}
@@ -89,7 +92,14 @@ Element json2Element(Json!(char).JsonValue* je, Element oe = null)
 	else if(je.type == 1)
 	{
 		oe.type = asString;
-		oe.str = je.toString;
+
+		char[] val = je.toString;
+
+//		char[] val_copy = new char[val.length + 1];
+//		val_copy[0..val.length] = val[];
+
+//		oe.str = val_copy;
+		oe.str = val;
 	}
 
 	return oe;
@@ -142,7 +152,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 						json2Element(json.value, root);
 						conditions[count] = root;
 
-						//						log.trace("element root: {}", root.toString);
+												log.trace("element root: {}", root.toString);
 
 						count++;
 
@@ -167,13 +177,14 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 	log.trace("end load documents[mandat], count = {}", conditions.length);
 }
 
-bool calculate_condition(char* user, ref Element mndt, triple_list_element* iterator_facts_of_document, char*[] hierarhical_departments_of_user)
+bool calculate_condition(char* user, ref Element mndt, triple_list_element* iterator_facts_of_document,
+		char*[] hierarhical_departments_of_user, uint rightType)
 {
 	log.trace("calculate_condition {}", getString(user));
-//	log.trace("mndt.type={}", mndt.type);
-//	log.trace("mndt.pairs.length={}", mndt.pairs.length);
-//	log.trace("mndt.pairs.keys={}", mndt.pairs.keys);
-	
+	//	log.trace("mndt.type={}", mndt.type);
+	//	log.trace("mndt.pairs.length={}", mndt.pairs.length);
+	//	log.trace("mndt.pairs.keys={}", mndt.pairs.keys);
+
 	//	log.trace("mndt={}, mndt.type={}", mndt, mndt.type);
 
 	if(mndt is null)
@@ -214,6 +225,58 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 	if(("condition" in mndt.pairs) !is null)
 	{
+		Element right = mndt.pairs["right"];
+
+		log.trace("rigth={}", right);
+
+		bool f_rigth_type = false;
+
+		foreach(ch; right.str)
+		{
+			if(ch == 'c' && rightType == RightType.CREATE)
+			{
+				f_rigth_type = true;
+				break;
+			}
+			else if(ch == 'r' && rightType == RightType.READ)
+			{
+				f_rigth_type = true;
+				break;
+			}
+			else if(ch == 'w' && rightType == RightType.WRITE)
+			{
+				f_rigth_type = true;
+				break;
+			}
+			else if(ch == 'u' && rightType == RightType.UPDATE)
+			{
+				f_rigth_type = true;
+				break;
+			}
+			else if(ch == 'd' && rightType == RightType.DELETE)
+			{
+				f_rigth_type = true;
+				break;
+			}
+		}
+
+		if(f_rigth_type == false)
+			return false;
+
+		if(("date_from" in mndt.pairs) !is null && ("date_to" in mndt.pairs) !is null)
+		{
+			Element date_from = mndt.pairs["date_from"];
+			Element date_to = mndt.pairs["date_to"];
+
+			if(date_from !is null && date_to !is null)
+			{
+				if(is_today_in_interval(date_from.str, date_to.str) == false)
+				{
+					log.trace("текущая дата не в указанном мандатом интервале [{} - {}]", date_from.str, date_to.str);
+					return false;
+				}
+			}
+		}
 
 		Element condt = mndt.pairs["condition"];
 		if(condt !is null)

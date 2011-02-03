@@ -275,9 +275,10 @@ public char[] get_day(tm* timeinfo)
 
 public int cmp_date_with_tm(char* date, tm* timeinfo)
 {
+//	assert(strlen(date) == 10);
 
-	assert(strlen(date) == 10);
-
+//	log.trace ("date:{}", getString (date));
+	
 	char[] today_y = get_year(timeinfo);
 	char[] today_m = get_month(timeinfo);
 	char[] today_d = get_day(timeinfo);
@@ -309,19 +310,37 @@ public int cmp_date_with_tm(char* date, tm* timeinfo)
 
 public bool is_today_in_interval(char* from, char* to)
 {
-	//log.trace("#itii 11");
+//	log.trace("#itii 11 {}", getString (from));
 
 	tm* timeinfo = get_local_time();
 
 	if(from !is null && strlen(from) == 10 && cmp_date_with_tm(from, timeinfo) > 0)
 		return false;
 
-	//log.trace("#itii 22");
+//	log.trace("#itii 22");
 
 	if(to !is null && strlen(to) == 10 && cmp_date_with_tm(to, timeinfo) < 0)
 		return false;
 
-	//log.trace("#itii 33");
+//	log.trace("#itii 33");
+	return true;
+}
+
+public bool is_today_in_interval(char[] from, char[] to)
+{
+//	log.trace("#is_today_in_interval from=[{}]", from);
+
+	tm* timeinfo = get_local_time();
+
+	if(from !is null && from.length == 10 && cmp_date_with_tm(from.ptr, timeinfo) > 0)
+		return false;
+
+//	log.trace("#itii 22");
+
+	if(to !is null && to.length == 10 && cmp_date_with_tm(to.ptr, timeinfo) < 0)
+		return false;
+
+//	log.trace("#itii 33");
 	return true;
 }
 

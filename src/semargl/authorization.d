@@ -487,7 +487,7 @@ class Authorization
 		foreach(condition; conditions)
 		{
 //			log.trace ("#1 {");
-			if(calculate_condition(User, condition, iterator_facts_of_document, hierarhical_departments) == true)
+			if(calculate_condition(User, condition, iterator_facts_of_document, hierarhical_departments, targetRightType) == true)
 			{
 				return true;
 			}

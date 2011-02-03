@@ -142,7 +142,7 @@ void main(char[][] args)
 	if(log_query)
 		az.getTripleStorage().set_log_query_mode(true);
 
-	load_mandats(az.getTripleStorage());
+	load_mandats(az.conditions, az.getTripleStorage());
 
 	if(autotest_file is null)
 	{
@@ -884,7 +884,7 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 					if(condition_id > 0)
 					{
 						log.trace("condition found !!!, reload mandats");
-						load_mandats(az.getTripleStorage ());
+						load_mandats(az.conditions, az.getTripleStorage ());
 //						
 //						char* qq = fact_o[condition_id];
 //

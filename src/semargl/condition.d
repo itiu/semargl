@@ -10,11 +10,98 @@ private import semargl.Predicates;
 private import tango.stdc.string;
 private import semargl.fact_tools;
 
-Json!(char).JsonValue*[] conditions;
+byte asObject = 0;
+byte asArray = 1;
+byte asString = 2;
 
-void load_mandats(TripleStorage ts)
+class Element
 {
-	conditions = new Json!(char).JsonValue*[16];
+	Element[char[]] pairs;
+	Element[] array;
+	char[] str;
+
+	byte type;
+
+	char[] toString()
+	{
+		if(type == asObject)
+		{
+			char[] qq;
+
+			foreach(key; pairs.keys)
+			{
+				qq ~= key ~ " : " ~ pairs[key].toString() ~ "\r";
+			}
+
+			return qq;
+		}
+		if(type == asArray)
+		{
+			char[] qq;
+
+			foreach(el; array)
+			{
+				qq ~= el.toString() ~ "\r";
+			}
+			return qq;
+		}
+		else if(type == asString)
+			return str;
+		else
+			return "?";
+	}
+
+}
+
+Element json2Element(Json!(char).JsonValue* je, Element oe = null)
+{
+	if(oe is null)
+		oe = new Element;
+
+	if(je.type == 4)
+	{
+		auto atts = je.toObject.attributes;
+
+		foreach(key, value; atts)
+		{
+			char[] key_copy = new char[key.length];
+			key_copy[] = key[];
+			oe.pairs[key_copy] = json2Element(value);
+		}
+
+		return oe;
+	}
+	else if(je.type == 5)
+	{
+		oe.type = asArray;
+
+		auto arr = je.toArray;
+
+		oe.array = new Element[arr.length];
+
+		int qq = 0;
+		foreach(aa; arr)
+		{
+			oe.array[qq] = json2Element(aa);
+			qq++;
+		}
+	}
+	else if(je.type == 1)
+	{
+		oe.type = asString;
+		oe.str = je.toString;
+	}
+
+	return oe;
+}
+
+void load_mandats(ref Element[] conditions, TripleStorage ts)
+{
+	Json!(char) json;
+	json = new Json!(char);
+
+	//	conditions = new Json!(char).JsonValue*[16];
+
 	log.trace("start load documents[mandat]");
 	triple_list_element* iterator = ts.getTriples(null, DOCUMENT_TEMPLATE_ID.ptr, "e277410330be4e7a8814185301e3e5bf".ptr);
 
@@ -33,8 +120,6 @@ void load_mandats(TripleStorage ts)
 				Triple* triple1 = iterator1.triple;
 				if(triple !is null)
 				{
-					//					printf("condition: %s\n", cast(char*) triple1.o);
-
 					char* qq = triple1.o;
 
 					char* ptr = qq;
@@ -51,10 +136,13 @@ void load_mandats(TripleStorage ts)
 
 					try
 					{
-						Json!(char) json = new Json!(char);
 						json.parse(getString(qq));
 
-						conditions[count] = json.value;
+						Element root = new Element;
+						json2Element(json.value, root);
+						conditions[count] = root;
+
+						//						log.trace("element root: {}", root.toString);
 
 						count++;
 
@@ -64,7 +152,7 @@ void load_mandats(TripleStorage ts)
 					}
 					catch(Exception ex)
 					{
-						log.trace("invalid json: [{}], exception: {}", qq, ex.msg);
+						log.trace("error:json: [{}], exception: {}", qq, ex.msg);
 
 					}
 
@@ -79,131 +167,144 @@ void load_mandats(TripleStorage ts)
 	log.trace("end load documents[mandat], count = {}", conditions.length);
 }
 
-bool calculate_condition(Json!(char).JsonValue* mndt, triple_list_element* iterator_facts_of_document,
-		char*[] hierarhical_departments_of_user)
+bool calculate_condition(char* user, ref Element mndt, triple_list_element* iterator_facts_of_document, char*[] hierarhical_departments_of_user)
 {
-	log.trace("calculate_condition");
+	log.trace("calculate_condition {}", getString(user));
+//	log.trace("mndt.type={}", mndt.type);
+//	log.trace("mndt.pairs.length={}", mndt.pairs.length);
+//	log.trace("mndt.pairs.keys={}", mndt.pairs.keys);
+	
+	//	log.trace("mndt={}, mndt.type={}", mndt, mndt.type);
+
+	if(mndt is null)
+		return false;
 
 	bool res = false;
 
-	char[] whom;
-	Json!(char).JsonValue* _whom = mndt.toObject.value("whom");
-
-	if(_whom !is null)
+	if(("whom" in mndt.pairs) !is null)
 	{
-		whom = _whom.toString;
+		char[] whom;
+		Element _whom = mndt.pairs["whom"];
 
-		log.trace("whom={}", whom);
-
-		bool is_whom = false;
-		// проверим, попадает ли  пользователь под критерий whom (узел на который выданно)
-		foreach(dep_id; hierarhical_departments_of_user)
+		if(_whom !is null)
 		{
-			if(strncmp(dep_id, whom.ptr, whom.length) == 0)
+			whom = _whom.str;
+
+			log.trace("whom={}", whom);
+
+			bool is_whom = false;
+			// проверим, попадает ли  пользователь под критерий whom (узел на который выданно)
+			foreach(dep_id; hierarhical_departments_of_user)
 			{
-				log.trace("да, пользователь попадает в иерархию whom");
-				is_whom = true;
-				break;
+				if(strncmp(dep_id, whom.ptr, whom.length) == 0)
+				{
+					log.trace("да, пользователь попадает в иерархию whom");
+					is_whom = true;
+					break;
+				}
 			}
-		}
 
-		if(is_whom == false)
-		{
-			log.trace("нет, пользователь не попадает в иерархию whom");
-			return false;
+			if(is_whom == false)
+			{
+				log.trace("нет, пользователь не попадает в иерархию whom");
+				return false;
+			}
 		}
 	}
 
-	Json!(char).JsonValue* condt = mndt.toObject.value("condition");
-	if(condt !is null)
+	if(("condition" in mndt.pairs) !is null)
 	{
 
-		if(condt.type == 5)
+		Element condt = mndt.pairs["condition"];
+		if(condt !is null)
 		{
-			auto arr = condt.toArray;
-
-			foreach(aa; arr)
+			if(condt.type == asArray)
 			{
-				auto qq = aa.toObject.value("and");
-				if(qq !is null)
+				auto arr = condt.array;
+
+				foreach(aa; arr)
 				{
-					log.trace("found AND");
-					auto atts = qq.toObject.attributes;
-
-					// рассчитаем значение для этого блока 
-					foreach(key, value; atts)
+					auto qq = aa.pairs["and"];
+					if(qq !is null)
 					{
-						char[] val = value.toString;
-						log.trace("json.value.object.att: {}:{}", key, val);
+						log.trace("found AND");
+						auto atts = qq.pairs;
 
-						if(key[0] == 'f' && key[1] == ':')
+						// рассчитаем значение для этого блока 
+						foreach(key, value; atts)
 						{
-							key = key[2 .. $];
-							log.trace("this is field {}={}", key, val);
+							char[] val = value.toString;
+							log.trace("key:value: {}:{}", key, val);
 
-							triple_list_element* iterator1 = iterator_facts_of_document;
-							while(iterator1 !is null)
+							if(key[0] == 'f' && key[1] == ':')
 							{
-								Triple* triple = iterator1.triple;
+								key = key[2 .. $];
+								log.trace("this is field {}={}", key, val);
 
-								if(strncmp(triple.p, key.ptr, key.length) == 0)
+								triple_list_element* iterator1 = iterator_facts_of_document;
+								while(iterator1 !is null)
 								{
-									log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, getString(
-											triple.o));
-									if(strncmp(triple.o, val.ptr, val.length) == 0)
+									Triple* triple = iterator1.triple;
+
+									if(strncmp(triple.p, key.ptr, key.length) == 0)
 									{
-										log.trace("!!!equals");
-										res = true;
+										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, getString(
+												triple.o));
+										if(strncmp(triple.o, val.ptr, val.length) == 0)
+										{
+											log.trace("!!!equals");
+											res = true;
+										}
+										else
+										{
+											res = false;
+											break;
+										}
 									}
-									else
-									{
-										res = false;
-										break;
-									}
+
+									iterator1 = iterator1.next_triple_list_element;
 								}
 
-								iterator1 = iterator1.next_triple_list_element;
 							}
-
-						}
-						else if(key == "doctype")
-						{
-							// "doctype" = DOCUMENT_TEMPLATE_ID
-							log.trace("{}={}", key, value.toString);
-
-							triple_list_element* iterator1 = iterator_facts_of_document;
-							while(iterator1 !is null)
+							else if(key == "doctype")
 							{
-								Triple* triple = iterator1.triple;
+								// "doctype" = DOCUMENT_TEMPLATE_ID
+								log.trace("{}={}", key, value.toString);
 
-								if(strncmp(triple.p, DOCUMENT_TEMPLATE_ID.ptr, DOCUMENT_TEMPLATE_ID.length) == 0)
+								triple_list_element* iterator1 = iterator_facts_of_document;
+								while(iterator1 !is null)
 								{
-									log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, getString(
-											triple.o));
-									if(strncmp(triple.o, val.ptr, val.length) == 0)
+									Triple* triple = iterator1.triple;
+
+									if(strncmp(triple.p, DOCUMENT_TEMPLATE_ID.ptr, DOCUMENT_TEMPLATE_ID.length) == 0)
 									{
-										log.trace("!!!equals");
-										res = true;
+										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, getString(
+												triple.o));
+										if(strncmp(triple.o, val.ptr, val.length) == 0)
+										{
+											log.trace("!!!equals");
+											res = true;
+										}
+										else
+										{
+											res = false;
+											break;
+										}
 									}
-									else
-									{
-										res = false;
-										break;
-									}
+
+									iterator1 = iterator1.next_triple_list_element;
 								}
 
-								iterator1 = iterator1.next_triple_list_element;
 							}
 
-						}
+							// найдем в документе  
 
-						// найдем в документе  
+						}
 
 					}
 
+					log.trace("aa.type[{}]={}", aa.type, aa);
 				}
-
-				log.trace("aa.type[{}]={}", aa.type, aa);
 			}
 		}
 	}

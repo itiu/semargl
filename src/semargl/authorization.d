@@ -48,11 +48,14 @@ private import semargl.Category;
 //private import mom_client;
 
 private import semargl.server;
-
 private import semargl.condition;
+
+private import tango.text.json.Json;
 
 class Authorization
 {
+	Element[] conditions;
+
 	private final ulong m1 = 1;
 	ulong mtf = 0;
 
@@ -71,6 +74,8 @@ class Authorization
 
 	this(char[][char[]] props, bool _triples_in_memory, bool _use_cache_for_TripleStorageOnMongodb)
 	{
+		conditions = new Element[16];
+		
 		triples_in_memory = _triples_in_memory;
 		use_cache_for_TripleStorageOnMongodb = _use_cache_for_TripleStorageOnMongodb;
 
@@ -481,10 +486,12 @@ class Authorization
 
 		foreach(condition; conditions)
 		{
-			if(calculate_condition(condition, iterator_facts_of_document, hierarhical_departments) == true)
+//			log.trace ("#1 {");
+			if(calculate_condition(User, condition, iterator_facts_of_document, hierarhical_departments) == true)
 			{
 				return true;
 			}
+//			log.trace ("#1 }");
 		}
 
 		if(isAdmin)

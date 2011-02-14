@@ -68,7 +68,8 @@ public void load_from_file(FilePath file_path, char[][] i_know_predicates, Tripl
 							command = line[b_pos - 2];
 						}
 
-					} else
+					}
+					else
 					{
 						if(line[i] == '>' || line[i] == '"')
 						{
@@ -109,7 +110,8 @@ public void load_from_file(FilePath file_path, char[][] i_know_predicates, Tripl
 				}
 				//				log.trace("@3");
 
-			} catch(Exception ex)
+			}
+			catch(Exception ex)
 			{
 				throw new Exception("fail read triple", ex);
 			}
@@ -147,10 +149,10 @@ public void load_from_file(FilePath file_path, char[][] i_know_predicates, Tripl
 						if(count_add_triple % 34567 == 0)
 							Stdout.format("count load triples {}", count_add_triple).newline;
 
-					} else
+					}
+					else
 					{
-						log.trace("!!! triple [{}] <{}><{}>\"{}\" not added. result = {}", count_add_triple, s, p, o,
-								result);
+						log.trace("!!! triple [{}] <{}><{}>\"{}\" not added. result = {}", count_add_triple, s, p, o, result);
 
 						count_ignored_triple++;
 					}
@@ -163,10 +165,18 @@ public void load_from_file(FilePath file_path, char[][] i_know_predicates, Tripl
 				if(command == 'D')
 				{
 					//					log.trace("persistent_triple_storage: remove triple [{}] <{}><{}>\"{}\"", count_add_triple, s, p, o);
-					ts.removeTriple(s, p, o);
+					try
+					{
+						ts.removeTriple(s, p, o);
+					}
+					catch(Exception ex)
+					{
+						log.trace("fail remove triple [{}] <{}><{}>\"{}\"", count_add_triple, s, p, o);
+					}
 				}
 
-			} else
+			}
+			else
 			{
 				count_ignored_triple++;
 			}
@@ -174,20 +184,20 @@ public void load_from_file(FilePath file_path, char[][] i_know_predicates, Tripl
 			//				if(count_add_triple > 5)
 			//					break;
 
-		} catch(Exception ex)
+		}
+		catch(Exception ex)
 		{
 			log.trace("fail load triples, count loaded {}", count_add_triple);
 			throw ex;
 		}
-	} while(line !is null);
+	}
+	while(line !is null);
 	//		
 
 	time = elapsed.stop;
 
-	log.trace("end read triples, total time = {}, count add triples = {}, ignored = {}", time, count_add_triple,
-			count_ignored_triple);
-	Stdout.format("end read triples, total time = {}, count add triples = {}, ignored = {}", time, count_add_triple,
-			count_ignored_triple).newline;
+	log.trace("end read triples, total time = {}, count add triples = {}, ignored = {}", time, count_add_triple, count_ignored_triple);
+	Stdout.format("end read triples, total time = {}, count add triples = {}, ignored = {}", time, count_add_triple, count_ignored_triple).newline;
 
 	delete n3file;
 }
@@ -196,7 +206,7 @@ class FileLineRead
 {
 	// ! строка не может быть больше половины размера буффера buff
 
-	private int buff_size = 1000 * 1024;
+	private int buff_size = 100 * 1024;
 	private char[] buff = null;
 
 	int pos_end_line_in_buff = 0;
@@ -260,8 +270,11 @@ class FileLineRead
 			// скопируем первую часть этой строки в начало буффера, при этом 
 			// размер нашей строки в конце буффера не должен быть более половины размера буффера
 			if(pos_end_line_in_buff < buff_size / 2)
+			{
+				log.trace("fail string: [{}]", buff);
 				throw new Exception(
 						"read_next_line: size of the string at the end of buffer should not be more than half the size of the buffer");
+			}
 
 			int size_first_half_line = content_size - pos_end_line_in_buff;
 

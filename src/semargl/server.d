@@ -89,6 +89,7 @@ void main(char[][] args)
 	bool nocompare = false;
 	bool log_query = false;
 	bool in_memory_mode = false;
+	bool load_n3log_into_mongodb = false;
 	bool use_cache_for_TripleStorageOnMongodb = false;
 
 	if(args.length > 0)
@@ -116,6 +117,11 @@ void main(char[][] args)
 				log_query = true;
 				log.trace("log query mode");
 			}
+			if(args[i] == "-load_n3log_into_mongodb")
+			{
+				load_n3log_into_mongodb = true;
+				log.trace("load *.n3log into mongodb");
+			}
 			if(args[i] == "-m")
 			{
 				in_memory_mode = true;
@@ -137,7 +143,7 @@ void main(char[][] args)
 
 	props = load_props();
 
-	az = new Authorization(props, in_memory_mode, use_cache_for_TripleStorageOnMongodb);
+	az = new Authorization(props, in_memory_mode, use_cache_for_TripleStorageOnMongodb, load_n3log_into_mongodb);
 
 	if(log_query)
 		az.getTripleStorage().set_log_query_mode(true);

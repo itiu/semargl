@@ -71,12 +71,14 @@ class Authorization
 
 	private char[] log_path = "";
 	private File log_file;
+	private bool load_n3log_into_mongodb;
 
-	this(char[][char[]] props, bool _triples_in_memory, bool _use_cache_for_TripleStorageOnMongodb)
+	this(char[][char[]] props, bool _triples_in_memory, bool _use_cache_for_TripleStorageOnMongodb, bool _load_n3log_into_mongodb)
 	{
 		conditions = new Element[16];
 		
 		triples_in_memory = _triples_in_memory;
+		load_n3log_into_mongodb = _load_n3log_into_mongodb;
 		use_cache_for_TripleStorageOnMongodb = _use_cache_for_TripleStorageOnMongodb;
 
 		counters = new int[10];
@@ -206,7 +208,7 @@ class Authorization
 			pp = TARGET_SUBSYSTEM_ELEMENT ~ ELEMENT_ID;
 			//
 
-			if(triples_in_memory)
+			if(triples_in_memory || load_n3log_into_mongodb)
 			{
 				char[] root = ".";
 				log.trace("Scanning '{}'", root);
@@ -220,7 +222,7 @@ class Authorization
 				foreach(file; scan.files)
 				{
 					log.trace("{}\n", file);
-					load_from_file(file, i_know_predicates, ts_mem);
+					load_from_file(file, i_know_predicates, ts);
 				}
 				log.trace("\n{} Errors", scan.errors.length);
 				foreach(error; scan.errors)

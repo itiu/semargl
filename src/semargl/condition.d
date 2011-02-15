@@ -180,7 +180,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 bool calculate_condition(char* user, ref Element mndt, triple_list_element* iterator_facts_of_document,
 		char*[] hierarhical_departments_of_user, uint rightType)
 {
-	log.trace("calculate_condition {}", getString(user));
+	log.trace("calculate_condition, user={}", getString(user));
 	//	log.trace("mndt.type={}", mndt.type);
 	//	log.trace("mndt.pairs.length={}", mndt.pairs.length);
 	//	log.trace("mndt.pairs.keys={}", mndt.pairs.keys);
@@ -201,7 +201,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 		{
 			whom = _whom.str;
 
-			log.trace("whom={}", whom);
+			log.trace("проверим вхождение whom=[{}] в иерархию пользователя ", whom);
 
 			bool is_whom = false;
 			// проверим, попадает ли  пользователь под критерий whom (узел на который выданно)
@@ -212,6 +212,10 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 					log.trace("да, пользователь попадает в иерархию whom");
 					is_whom = true;
 					break;
+				}
+				else
+				{
+					log.trace("нет, dep_id = [{}]",  getString(dep_id));					
 				}
 			}
 
@@ -290,6 +294,8 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 					auto qq = aa.pairs["and"];
 					if(qq !is null)
 					{
+						bool res_op_and = false;
+						
 						log.trace("found AND");
 						auto atts = qq.pairs;
 
@@ -311,16 +317,16 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 									if(strncmp(triple.p, key.ptr, key.length) == 0)
 									{
-										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, getString(
+										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, val, getString(
 												triple.o));
 										if(strncmp(triple.o, val.ptr, val.length) == 0)
 										{
 											log.trace("!!!equals");
-											res = true;
+											res_op_and = true;
 										}
 										else
 										{
-											res = false;
+											res_op_and = false;
 											break;
 										}
 									}
@@ -329,7 +335,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 								}
 
 							}
-							else if(key == "doctype")
+							else if(key == "doctype" && res_op_and == true)
 							{
 								// "doctype" = DOCUMENT_TEMPLATE_ID
 								log.trace("{}={}", key, value.toString);
@@ -341,16 +347,16 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 									if(strncmp(triple.p, DOCUMENT_TEMPLATE_ID.ptr, DOCUMENT_TEMPLATE_ID.length) == 0)
 									{
-										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, getString(
+										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, val, getString(
 												triple.o));
 										if(strncmp(triple.o, val.ptr, val.length) == 0)
 										{
 											log.trace("!!!equals");
-											res = true;
+											res_op_and = true;
 										}
 										else
 										{
-											res = false;
+											res_op_and = false;
 											break;
 										}
 									}
@@ -363,7 +369,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 							// найдем в документе  
 
 						}
-
+						res = res_op_and;
 					}
 
 					log.trace("aa.type[{}]={}", aa.type, aa);

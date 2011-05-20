@@ -32,8 +32,6 @@ public int calculate(char* user, char* elementId, uint rightType, TripleStorage 
 				{
 					// если не null, значит право с найденным субъектом создал документооборот
 
-					//log.trace("isInDocFlow : subject = {} | s1", fromStringz(ACL_subject), fromStringz(subject1));
-
 					is_in_docflow = true;
 
 					triple_list_element* iterator2 = ts.getTriples(ACL_subject, TARGET_SUBSYSTEM_ELEMENT.ptr, user);
@@ -43,9 +41,7 @@ public int calculate(char* user, char* elementId, uint rightType, TripleStorage 
 					{
 						// если не null, значит target для права это наш user
 
-						//			subject1 = cast(char*) triple + 6;
-
-						//log.trace("isInDocFlow #2 {}", fromStringz(subject1));
+						triple = iterator2.triple;
 
 						triple_list_element* iterator3 = ts.getTriples(ACL_subject, RIGHTS.ptr, null);
 						triple_list_element* iterator3_FE = iterator3;
@@ -53,23 +49,18 @@ public int calculate(char* user, char* elementId, uint rightType, TripleStorage 
 						if(iterator3 !is null)
 						{
 
-							//				  subject1 = cast(char*) triple + 6;
-
-							//log.trace("isInDocFlow #3 | {}", subject1);
-
-							triple = iterator3.triple;
+						triple = iterator3.triple;
+						
 							if(triple !is null)
 							{
-								//				  subject1 = cast(char*) triple + 6;				
-								//log.trace("isInDocFlow #4 | {}", subject1);
-
 								// проверим, есть ли тут требуемуе нами право
 								char* triple2_o = cast(char*) triple.o;
 
 								bool is_actual = false;
+
 								while(*triple2_o != 0)
-								{
-									//log.trace("lookRightOfIterator ('{}' || '{}' == '{}' ?)", *triple2_o, *(triple2_o + 1), rightType);
+								{																
+									log.trace("lookRightOfIterator2 ('{}' || '{}' == '{}' ?)", *triple2_o, *(triple2_o + 1), rightType);
 									if(*triple2_o == *(rt_symbols + rightType) || *(triple2_o + 1) == *(rt_symbols + rightType))
 									{
 										if(!is_actual)

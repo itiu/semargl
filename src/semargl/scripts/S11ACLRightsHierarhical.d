@@ -143,19 +143,29 @@ bool lookRightOfIterator(triple_list_element* iterator3, char* rightType, Triple
 					bool is_actual = false;
 					while(*triple2_o != 0)
 					{
+						if (*triple2_o == 'd')
+						{
+							if(!is_actual)
+								is_actual = is_subject_actual(s, ts);
+								
+							if(is_actual)
+							{
+								return true;
+							}
+							else
+							{
+								break;
+							}
+						}
+						
 						//					  log.trace("lookRightOfIterator ('{}' || '{}' == '{}' ?)", *triple2_o, *(triple2_o + 1), *rightType);
 						if(*triple2_o == *rightType || *(triple2_o + 1) == *rightType)
 						{
 							if(!is_actual)
 								is_actual = is_subject_actual(s, ts);
+								
 							if(is_actual)
-							{
-								//@@@@
-//								Thread.sleep(0.001);
-//								log.trace("# subject = {} ", getString(s));
-
 								return true;
-							}
 							else
 								break;
 						}

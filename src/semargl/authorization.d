@@ -27,6 +27,7 @@ private import semargl.scripts.S01UserIsAdmin;
 private import semargl.scripts.S09DocumentOfTemplate;
 private import semargl.scripts.S10UserIsAuthorOfDocument;
 private import semargl.scripts.S11ACLRightsHierarhical;
+private import semargl.scripts.DocumentOfTemplateLocalAdmin;
 
 private import semargl.RightTypeDef;
 private import semargl.script_util;
@@ -407,6 +408,18 @@ class Authorization
 
 			return result;
 		}
+
+		result = strcmp(authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0 && semargl.scripts.DocumentOfTemplateLocalAdmin.calculate(
+				User, authorizedElementId, targetRightType, ts, hierarhical_departments, pp);
+		if(result)
+		{
+			if(f_authorization_trace)
+			{
+				log.trace("end autorize: DocumentOfTemplateLocalAdmin result = {}", result);
+			}
+			return true;
+		}
+
 
 		int is_in_docflow = -1;
 		if((targetRightType == RightType.UPDATE || targetRightType == RightType.DELETE || targetRightType == RightType.WRITE) && strcmp(

@@ -8,6 +8,8 @@ private import trioplax.triple;
 private import semargl.fact_tools;
 private import semargl.Predicates;
 
+private import semargl.Log;
+
 public bool calculate(char* user, char* elementId, uint rightType, TripleStorage ts, triple_list_element* iterator_facts_of_document)
 {
 
@@ -56,7 +58,9 @@ public bool calculate(char* user, char* elementId, uint rightType, TripleStorage
 
 					if(strcmp(triple0_o, user) == 0)
 					{
-						//					Stdout.format("да! я автор документа {}", getString(elementId)).newline;
+						version (trace)
+						   log.trace("да! я[{}] автор документа {}", getString(user), getString(elementId));
+						   
 						return true;
 
 					}

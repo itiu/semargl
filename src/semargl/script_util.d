@@ -2,6 +2,7 @@ module semargl.script_util;
 
 private import tango.io.Stdout;
 private import tango.text.convert.Integer;
+private import tango.stdc.stdio;
 private import tango.stdc.string;
 private import tango.stdc.stringz;
 private import tango.stdc.time;
@@ -75,20 +76,24 @@ public char*[] getDepartmentTreePathOfUser(char* user, TripleStorage ts)
 }
 
 /*	private final ulong m1 = 1;
-	ulong mtf = 1;
+ ulong mtf = 1;
 
  * возвращает массив фактов (s) вышестоящих подразделений по отношению к delegate_id   
  */
 public Triple*[] getDelegateAssignersTreeArray(char* person_id, TripleStorage ts)
 {
+	version(trace)
+		log.trace("getDelegateAssignersTreeArray for person {}, ", fromStringz(person_id));
 
 	Triple*[] delegates = new Triple*[50];
 	uint result_cnt = 0;
 
 	bool put_in_result(Triple* founded_delegate)
 	{
-		if(mtf & m1)
-			log.trace("проверим, есть ли этот делегат <{}><{}>\"{}\" в нашем списке", fromStringz (founded_delegate.s), fromStringz (founded_delegate.p), fromStringz (founded_delegate.o));
+		version(trace)
+			log.trace("добавим делегата, если его нет в списке <{}><{}>\"{}\" в списке",
+					fromStringz(founded_delegate.s), fromStringz(founded_delegate.p), fromStringz(founded_delegate.o));
+
 		// проверим, есть ли этот делегат в нашем списке
 		for(int i = 0; i < delegates.length; i++)
 			if(delegates[i] == founded_delegate)
@@ -102,80 +107,90 @@ public Triple*[] getDelegateAssignersTreeArray(char* person_id, TripleStorage ts
 
 	delegates.length = result_cnt;
 
+	version(trace)
+		log.trace("found {} delegate(s)", delegates.length);
+
 	return delegates;
 }
 
-public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts, bool delegate(Triple* founed_delegate) process_delegate)
+public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts,
+		bool delegate(Triple* founed_delegate) store_delegate)
 {
 	triple_list_element* delegates_facts = ts.getTriples(null, DELEGATION_DELEGATE.ptr, delegate_id);
 	triple_list_element* delegates_facts_FE = delegates_facts;
 
 	bool f_stop = false;
-	
+
 	if(delegates_facts !is null)
 	{
-		//log.trace("#2 gda");
 		while(delegates_facts !is null && !f_stop)
 		{
-			//log.trace("#3 gda");
 			Triple* de_legate = delegates_facts.triple;
 			if(de_legate !is null)
 			{
 				char* subject = cast(char*) de_legate.s;
-				triple_list_element* owners_facts = ts.getTriples(subject, DELEGATION_OWNER.ptr, null);
+
+				triple_list_element* owners_facts = ts.getTriples(subject, null, null);
 				triple_list_element* owners_facts_FE = owners_facts;
 
 				if(owners_facts !is null)
 				{
+					char* delegation_owner;
+					char* delegation_with_tree;
+					char* date_from;
+					char* date_to;
+					Triple* sdr;
+
 					while(owners_facts !is null && !f_stop)
 					{
-						Triple* owner = owners_facts.triple;
-						if(owner !is null)
+						Triple* dr = owners_facts.triple;
+
+						version(trace)
+							print_triple(dr);
+
+						if(dr !is null)
 						{
-							//log.trace("#4 gda");
-
-							char* object = cast(char*) owner.o;
-
-							//log.trace("delegate = {}, owner = {}", getString(subject), getString(object));
-
-							/*			  strcpy(result_ptr++, ",");
-							 strcpy(result_ptr, object);
-							 result_ptr += strlen(object);*/
-							if (process_delegate(owner) == false)
+							if(strcmp(dr.p, DELEGATION_OWNER.ptr) == 0)
 							{
-								f_stop = true;
-								break;
-							}
+								delegation_owner = cast(char*) dr.o;
 
-							triple_list_element* with_tree_facts = ts.getTriples(subject, DELEGATION_WITH_TREE.ptr, null);
-							triple_list_element* with_tree_facts_FE = with_tree_facts;
-							{
-								while(with_tree_facts !is null && !f_stop)
+								if(delegation_owner !is null)
 								{
-									Triple* with_tree = with_tree_facts.triple;
-									if(with_tree !is null)
-									{
-										if(strcmp(cast(char*) with_tree, "1") == 0)
-											getDelegateAssignersForDelegate(object, ts, process_delegate);
-										with_tree_facts = null;
-									}
-									else
-									{
-										with_tree_facts = with_tree_facts.next_triple_list_element;
-									}
+									sdr = dr;
 								}
+
+							} else if(strcmp(dr.p, DELEGATION_WITH_TREE.ptr) == 0)
+							{
+								delegation_with_tree = cast(char*) dr.o;
+
+								if(delegation_with_tree !is null && strcmp(cast(char*) delegation_with_tree, "1") == 0)
+								{
+									getDelegateAssignersForDelegate(delegation_owner, ts, store_delegate);
+								}
+							} else if(strcmp(dr.p, DATE_FROM.ptr) == 0)
+							{
+								date_from = cast(char*) dr.o;
+
+							} else if(strcmp(dr.p, DATE_TO.ptr) == 0)
+							{
+								date_to = cast(char*) dr.o;
+
 							}
-							ts.list_no_longer_required(with_tree_facts_FE);
-							owners_facts = null;
 						}
-						else
-						{
-							//?							next_owner = *(owners_facts + 1);
-							owners_facts = delegates_facts.next_triple_list_element;
-							//?cast(uint*) next_owner;
-						}
+						owners_facts = owners_facts.next_triple_list_element;
 					}
 					ts.list_no_longer_required(owners_facts_FE);
+
+					if(delegation_owner !is null)
+					{
+						bool is_actual = is_today_in_interval(date_from, date_to);
+
+						if(is_actual && store_delegate(sdr) == false)
+						{
+							f_stop = true;
+							break;
+						}
+					}
 				}
 			}
 			delegates_facts = delegates_facts.next_triple_list_element;
@@ -186,13 +201,20 @@ public void getDelegateAssignersForDelegate(char* delegate_id, TripleStorage ts,
 
 public bool is_subject_actual(char* subject, TripleStorage ts)
 {
+	version(trace)
+		log.trace("subject [{}] is actual ?", subject[0 .. strlen(subject)]);
+
 	char* from;
 	char* to;
 
 	triple_list_element* from_iter = ts.getTriples(subject, DATE_FROM.ptr, null);
 	triple_list_element* from_iter_FE = from_iter;
 
-	// log.trace("#1");
+	version(trace)
+	{
+		log.trace("list from_iter:");
+		print_list_triple(from_iter);
+	}
 
 	{
 		while(from_iter !is null)
@@ -215,6 +237,13 @@ public bool is_subject_actual(char* subject, TripleStorage ts)
 
 	triple_list_element* to_iter = ts.getTriples(subject, DATE_TO.ptr, null);
 	triple_list_element* to_iter_FE = to_iter;
+
+	version(trace)
+	{
+		log.trace("list to_iter:");
+		print_list_triple(to_iter);
+	}
+
 	{
 		while(to_iter !is null)
 		{
@@ -232,9 +261,12 @@ public bool is_subject_actual(char* subject, TripleStorage ts)
 		ts.list_no_longer_required(to_iter_FE);
 	}
 
-	//	log.trace("#20");	
+	bool res = is_today_in_interval(from, to);
 
-	return is_today_in_interval(from, to);
+	version(trace)
+		log.trace("subject is actual ?, res={}", res);
+
+	return res;
 }
 
 public tm* get_local_time()
@@ -275,10 +307,11 @@ public char[] get_day(tm* timeinfo)
 
 public int cmp_date_with_tm(char* date, tm* timeinfo)
 {
-//	assert(strlen(date) == 10);
+	//	assert(strlen(date) == 10);
+	version(trace)
+		if(date !is null)
+			log.trace("cmp date:{}", getString(date));
 
-//	log.trace ("date:{}", getString (date));
-	
 	char[] today_y = get_year(timeinfo);
 	char[] today_m = get_month(timeinfo);
 	char[] today_d = get_day(timeinfo);
@@ -286,61 +319,62 @@ public int cmp_date_with_tm(char* date, tm* timeinfo)
 	for(int i = 0; i < 4; i++)
 	{
 		if(*(date + i + 6) > today_y[i])
+		{
 			return 1;
-		else if(*(date + i + 6) < today_y[i])
+		} else if(*(date + i + 6) < today_y[i])
+		{
 			return -1;
+		}
 	}
 
 	for(int i = 0; i < 2; i++)
 	{
 		if(*(date + i + 3) > today_m[i])
+		{
 			return 1;
-		else if(*(date + i + 3) < today_m[i])
+		} else if(*(date + i + 3) < today_m[i])
+		{
 			return -1;
+		}
 	}
 
 	for(int i = 0; i < 2; i++)
+	{
 		if(*(date + i) > today_d[i])
+		{
 			return 1;
-		else if(*(date + i) < today_d[i])
+		} else if(*(date + i) < today_d[i])
+		{
 			return -1;
+		}
+	}
 
 	return 0;
 }
 
 public bool is_today_in_interval(char* from, char* to)
 {
-//	log.trace("#itii 11 {}", getString (from));
-
 	tm* timeinfo = get_local_time();
 
 	if(from !is null && strlen(from) == 10 && cmp_date_with_tm(from, timeinfo) > 0)
 		return false;
 
-//	log.trace("#itii 22");
-
 	if(to !is null && strlen(to) == 10 && cmp_date_with_tm(to, timeinfo) < 0)
 		return false;
 
-//	log.trace("#itii 33");
 	return true;
 }
 
 public bool is_today_in_interval(char[] from, char[] to)
 {
-//	log.trace("#is_today_in_interval from=[{}]", from);
-
 	tm* timeinfo = get_local_time();
 
 	if(from !is null && from.length == 10 && cmp_date_with_tm(from.ptr, timeinfo) > 0)
 		return false;
 
-//	log.trace("#itii 22");
-
 	if(to !is null && to.length == 10 && cmp_date_with_tm(to.ptr, timeinfo) < 0)
 		return false;
 
-//	log.trace("#itii 33");
 	return true;
 }
 

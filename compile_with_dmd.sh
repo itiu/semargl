@@ -1,7 +1,9 @@
+DMD=~/dmd1-064/linux/bin/dmd
+
 date
 rm Semargl
 
-dmd /usr/include/d/dmd/tango/net/InternetAddress.d /usr/include/d/dmd/tango/net/device/Socket.d /usr/include/d/dmd/tango/stdc/stdarg.d /usr/include/d/dmd/tango/stdc/errno.d \
+$DMD /usr/include/d/dmd/tango/net/InternetAddress.d /usr/include/d/dmd/tango/net/device/Socket.d /usr/include/d/dmd/tango/stdc/stdarg.d /usr/include/d/dmd/tango/stdc/errno.d \
 -Iimport/libmongod -Iimport/other -Iimport \
 src/*.d src/mod/tango/io/device/*.d src/scripts/*.d \
 lib/mom_client.a lib/librabbitmq_client.a lib/librabbitmq.a lib/trioplax.a lib/libmongod.a \

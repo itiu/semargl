@@ -13,6 +13,10 @@ private import semargl.scripts.S11ACLRightsHierarhical;
 public bool calculate(char* user, char* elementId, uint rightType, TripleStorage ts, char*[] array_of_targets_of_hierarhical_departments,
 		char[] pp)
 {
+	version (trace)
+	    log.trace("S09DocumentOfTemplate");
+	
+
 	bool result = false;
 
 	if(elementId is null || *elementId == '*')
@@ -29,7 +33,9 @@ public bool calculate(char* user, char* elementId, uint rightType, TripleStorage
 		if(template_triple !is null)
 		{
 			char*	template_id = cast(char*) template_triple.o;
-			//log.trace("S09 #1 template_id = {}", template_id);
+			
+			version (trace)			
+			    log.trace("S09 #1 template_id = {}", template_id[0..strlen ( template_id)]);
 
 			result = semargl.scripts.S11ACLRightsHierarhical.checkRight(user, template_id, rightType, ts, array_of_targets_of_hierarhical_departments, pp,
 					DOCUMENTS_OF_TEMPLATE.ptr);

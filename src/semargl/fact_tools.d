@@ -8,10 +8,28 @@ private import tango.stdc.string;
 private import semargl.Log;
 private import trioplax.triple;
 
+alias char[] string;
+
 struct Counts
 {
 	byte facts;
 	byte open_brakets;
+}
+
+string getFirstObject(triple_list_element* iterator1, string predicate)
+{
+
+	while(iterator1 !is null)
+	{
+		Triple* triple = iterator1.triple;
+
+		if(strncmp(triple.p, predicate.ptr, predicate.length) == 0)
+		{
+			return getString(triple.o);
+		}
+
+		iterator1 = iterator1.next_triple_list_element;
+	}
 }
 
 public void print_list_triple(triple_list_element* list_iterator)
@@ -54,16 +72,16 @@ public Counts calculate_count_facts(char* message, ulong message_size)
 	{
 		char* cur_char = cast(char*) (message + i);
 
-//		if(*cur_char == '"')
-//		{
-//			if(is_open_quotes == false)
-//				is_open_quotes = true;
-//			else
-//			{
-//				is_open_quotes = false;
-//			}
-//		}
-		
+		//		if(*cur_char == '"')
+		//		{
+		//			if(is_open_quotes == false)
+		//				is_open_quotes = true;
+		//			else
+		//			{
+		//				is_open_quotes = false;
+		//			}
+		//		}
+
 		if(*cur_char == '.')
 			res.facts++;
 
@@ -74,12 +92,13 @@ public Counts calculate_count_facts(char* message, ulong message_size)
 	return res;
 }
 
-public uint extract_facts_from_message(char* message, ulong message_size, Counts counts, char* fact_s[], char* fact_p[], char* fact_o[],
-		uint is_fact_in_object[])
+public uint extract_facts_from_message(char* message, ulong message_size, Counts counts, char* fact_s[],
+		char* fact_p[], char* fact_o[], uint is_fact_in_object[])
 {
 	version(trace)
 	{
-		log.trace("extract_facts_from_message ... facts.size={}, counts.open_brakets={}", counts.facts, counts.open_brakets);
+		log.trace("extract_facts_from_message ... facts.size={}, counts.open_brakets={}", counts.facts,
+				counts.open_brakets);
 	}
 
 	byte count_open_brakets = 0;
@@ -94,8 +113,8 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 	{
 		version(trace1)
 		{
-			log.trace("i = {}, count_facts={}, count_open_brakets={}, count_fact_fragment={}", i, count_facts, count_open_brakets,
-					count_fact_fragment);
+			log.trace("i = {}, count_facts={}, count_open_brakets={}, count_fact_fragment={}", i, count_facts,
+					count_open_brakets, count_fact_fragment);
 		}
 
 		char* cur_char_ptr = message + i;
@@ -112,9 +131,9 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 			}
 		}
 
-//		if (is_open_quotes)
-//			continue;
-		
+		//		if (is_open_quotes)
+		//			continue;
+
 		if(cur_char == '{')
 		{
 			count_open_brakets++;
@@ -190,7 +209,8 @@ public uint extract_facts_from_message(char* message, ulong message_size, Counts
 	return count_facts;
 }
 
-public static final char[16] HEX_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+public static final char[16] HEX_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+		'f'];
 
 public static final ulong getUUID()
 {

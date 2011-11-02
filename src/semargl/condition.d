@@ -2,15 +2,19 @@ module semargl.condition;
 
 private import tango.text.json.Json;
 private import tango.stdc.stdio;
+private import tango.stdc.string;
+
+private import Util = tango.text.Util;
 
 private import trioplax.triple;
 private import trioplax.TripleStorage;
 private import semargl.Log;
 private import semargl.Predicates;
-private import tango.stdc.string;
 private import semargl.fact_tools;
 private import semargl.RightTypeDef;
 private import semargl.script_util;
+
+alias char[] string;
 
 byte asObject = 0;
 byte asArray = 1;
@@ -121,6 +125,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 		{
 			char* mandat_subject = cast(char*) triple.s;
 			printf("found mandat %s\n", mandat_subject);
+			log.trace("found mandat: {}", getString(mandat_subject));
 
 			triple_list_element* iterator1 = ts.getTriples(mandat_subject, "condition", null);
 			if(iterator1 !is null)
@@ -129,28 +134,54 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 				if(triple !is null)
 				{
 					char* qq = triple1.o;
+					log.trace("str0: {}", getString(qq));
 
 					char* ptr = qq;
-					while(*ptr != 0)
-					{
-						if(*ptr == ')')
-							*ptr = '}';
-						if(*ptr == '(')
-							*ptr = '{';
-						if(*ptr == '\'')
-							*ptr = '"';
+
+					while(*ptr == ' ')
 						ptr++;
+
+					bool isQuoted = false;
+
+					if(*ptr == '(')
+					{
+						while(*ptr != 0)
+						{
+							if(*ptr == '\'')
+							{
+								if(isQuoted == false)
+									isQuoted = true;
+								else
+									isQuoted = false;
+								*ptr = '"';
+							}
+
+							if(isQuoted == false)
+							{
+								if(*ptr == ')')
+									*ptr = '}';
+								if(*ptr == '(')
+									*ptr = '{';
+								if(*ptr == '\'')
+									*ptr = '"';
+							}
+
+							ptr++;
+						}
 					}
+
+					char[] str = getString(qq);
+					log.trace("str1: {}", str);
 
 					try
 					{
-						json.parse(getString(qq));
+						json.parse(str);
 
 						Element root = new Element;
 						json2Element(json.value, root);
 						conditions[count] = root;
 
-						log.trace("element root: {}", root.toString);
+						//						log.trace("element root: {}", root.toString);
 
 						count++;
 
@@ -159,7 +190,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 
 					} catch(Exception ex)
 					{
-						log.trace("error:json: [{}], exception: {}", qq, ex.msg);
+						log.trace("error:json: [{}], exception: {}", str, ex.msg);
 
 					}
 
@@ -203,31 +234,30 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 				log.trace("проверим вхождение whom=[{}] в иерархию пользователя ", whom);
 
 			bool is_whom = false;
-			
+
 			// проверим, попадает ли  пользователь под критерий whom (узел на который выданно)
 			//	сначала, проверим самого пользователя
- 		        if(strncmp(user, whom.ptr, whom.length) == 0)
+			if(strncmp(user, whom.ptr, whom.length) == 0)
 			{
-			    version(trace)
-				log.trace("да, пользователь попадает в иерархию whom");
-			    is_whom = true;
-			}
-			else
+				version(trace)
+					log.trace("да, пользователь попадает в иерархию whom");
+				is_whom = true;
+			} else
 			{
-			    foreach(dep_id; hierarhical_departments_of_user)
-			    {
-				    if(strncmp(dep_id, whom.ptr, whom.length) == 0)
-				    {
-					version(trace)
-						log.trace("да, пользователь попадает в иерархию whom");
-					is_whom = true;
-					break;
-				    } else
-				    {
-					version(trace)
-						log.trace("нет, dep_id = [{}]", getString(dep_id));
-				    }
-			    }
+				foreach(dep_id; hierarhical_departments_of_user)
+				{
+					if(strncmp(dep_id, whom.ptr, whom.length) == 0)
+					{
+						version(trace)
+							log.trace("да, пользователь попадает в иерархию whom");
+						is_whom = true;
+						break;
+					} else
+					{
+						version(trace)
+							log.trace("нет, dep_id = [{}]", getString(dep_id));
+					}
+				}
 			}
 
 			if(is_whom == false)
@@ -243,7 +273,8 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 	{
 		Element right = mndt.pairs["right"];
 
-		log.trace("rigth={}", right);
+		version(trace)
+			log.trace("rigth={}", right);
 
 		bool f_rigth_type = false;
 
@@ -295,7 +326,13 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 		Element condt = mndt.pairs["condition"];
 		if(condt !is null)
 		{
-			if(condt.type == asArray)
+			if(condt.type == asString)
+			{
+				bool eval_res = eval(condt.str, iterator_facts_of_document);
+				version(trace)
+					log.trace("eval:{}, res={}", condt.str, eval_res);
+				return eval_res;
+			} else if(condt.type == asArray)
 			{
 				auto arr = condt.array;
 
@@ -306,19 +343,25 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 					{
 						bool res_op_and = false;
 
-						log.trace("found AND");
+						version(trace)
+							log.trace("found AND");
+
 						auto atts = qq.pairs;
 
 						// рассчитаем значение для этого блока 
 						foreach(key, value; atts)
 						{
 							char[] val = value.toString;
-							log.trace("key:value: {}:{}", key, val);
+
+							version(trace)
+								log.trace("key:value: {}:{}", key, val);
 
 							if(key[0] == 'f' && key[1] == ':')
 							{
 								key = key[2 .. $];
-								log.trace("this is field {}={}", key, val);
+								version(trace)
+
+									log.trace("this is field {}={}", key, val);
 
 								triple_list_element* iterator1 = iterator_facts_of_document;
 								while(iterator1 !is null)
@@ -327,8 +370,9 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 									if(strncmp(triple.p, key.ptr, key.length) == 0)
 									{
-										log.trace("in document {} found key {}, val={}, triple.o={}", getString(
-												triple.s), key, val, getString(triple.o));
+										version(trace)
+											log.trace("in document {} found key {}, val={}, triple.o={}", getString(
+													triple.s), key, val, getString(triple.o));
 										if(strncmp(triple.o, val.ptr, val.length) == 0)
 										{
 											version(trace)
@@ -394,4 +438,88 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 		log.trace("calculate_condition end");
 
 	return res;
+}
+
+bool eval(string expr, triple_list_element* data)
+{
+	expr = Util.trim(expr);
+
+	//	log.trace("expr={}", expr);
+
+	static int findOperand(string s, string op1)
+	{
+		int parens = 0;
+		foreach_reverse(p, c; s)
+		{
+			char c2 = 0;
+
+			if(p > 0)
+				c2 = s[p - 1];
+
+			if((c == op1[1] && c2 == op1[0]) && parens == 0)
+				return p - 1;
+
+			else if(c == ')')
+				parens++;
+			else if(c == '(')
+				parens--;
+		}
+		return -1;
+	}
+
+	// [&&]
+	// [||]
+
+	int p1 = findOperand(expr, "&&");
+	int p2 = findOperand(expr, "||");
+
+	if(p1 >= 0)
+		return eval(expr[0 .. p1], data) && eval(expr[p1 + 2 .. $], data);
+
+	if(p2 >= 0)
+		return eval(expr[0 .. p2], data) || eval(expr[p2 + 2 .. $], data);
+
+	if(expr.length > 2 && expr[0] == '(' && expr[$ - 1] == ')')
+		return eval(expr[1 .. $ - 1], data);
+
+	// [==] [!=]
+
+	if(data !is null)
+	{
+		string A, B;
+
+		string[] tokens = Util.split(expr, " ");
+
+		//		log.trace ("tokens={}",  tokens);
+
+		if(tokens.length != 3)
+			return false;
+
+		if(tokens[0][0] == '\'' || tokens[0][0] == '"' || tokens[0][0] == '`')
+		{
+			// это строка
+			A = tokens[0][1 .. $ - 1];
+		} else
+		{
+			// нужно найти данный предикат tokens[0] в data и взять его значение
+			A = getFirstObject(data, tokens[0]);
+		}
+
+		if(tokens[2][0] == '\'' || tokens[2][0] == '"' || tokens[2][0] == '`')
+		{
+			// это строка
+			B = tokens[2][1 .. $ - 1];
+		} else
+		{
+			// нужно найти данный предикат tokens[1] в data и взять его значение
+			B = getFirstObject(data, tokens[2]);
+		}
+
+		//		log.trace ("[A={} tokens[1]={} B={}]", A, tokens[1], B);
+
+		if(tokens[1] == "==")
+			return A == B;
+	}
+
+	return false;
 }

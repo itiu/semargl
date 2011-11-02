@@ -46,8 +46,7 @@ class Element
 				qq ~= el.toString() ~ "\r";
 			}
 			return qq;
-		}
-		else if(type == asString)
+		} else if(type == asString)
 			return str;
 		else
 			return "?";
@@ -67,14 +66,13 @@ Element json2Element(Json!(char).JsonValue* je, Element oe = null)
 		foreach(key, value; atts)
 		{
 			char[] key_copy = new char[key.length];
-			
+
 			key_copy[] = key[];
 			oe.pairs[key_copy] = json2Element(value);
 		}
 
 		return oe;
-	}
-	else if(je.type == 5)
+	} else if(je.type == 5)
 	{
 		oe.type = asArray;
 
@@ -88,17 +86,16 @@ Element json2Element(Json!(char).JsonValue* je, Element oe = null)
 			oe.array[qq] = json2Element(aa);
 			qq++;
 		}
-	}
-	else if(je.type == 1)
+	} else if(je.type == 1)
 	{
 		oe.type = asString;
 
 		char[] val = je.toString;
 
-//		char[] val_copy = new char[val.length + 1];
-//		val_copy[0..val.length] = val[];
+		//		char[] val_copy = new char[val.length + 1];
+		//		val_copy[0..val.length] = val[];
 
-//		oe.str = val_copy;
+		//		oe.str = val_copy;
 		oe.str = val;
 	}
 
@@ -113,7 +110,8 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 	//	conditions = new Json!(char).JsonValue*[16];
 
 	log.trace("start load documents[mandat]");
-	triple_list_element* iterator = ts.getTriples(null, DOCUMENT_TEMPLATE_ID.ptr, "e277410330be4e7a8814185301e3e5bf".ptr);
+	triple_list_element* iterator = ts.getTriples(null, DOCUMENT_TEMPLATE_ID.ptr,
+			"e277410330be4e7a8814185301e3e5bf".ptr);
 
 	int count = 0;
 	while(iterator !is null)
@@ -152,15 +150,14 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 						json2Element(json.value, root);
 						conditions[count] = root;
 
-												log.trace("element root: {}", root.toString);
+						log.trace("element root: {}", root.toString);
 
 						count++;
 
 						if(conditions.length < count)
 							conditions.length = conditions.length + 16;
 
-					}
-					catch(Exception ex)
+					} catch(Exception ex)
 					{
 						log.trace("error:json: [{}], exception: {}", qq, ex.msg);
 
@@ -180,7 +177,8 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 bool calculate_condition(char* user, ref Element mndt, triple_list_element* iterator_facts_of_document,
 		char*[] hierarhical_departments_of_user, uint rightType)
 {
-	log.trace("calculate_condition, user={}", getString(user));
+	version(trace)
+		log.trace("calculate_condition, user={}", getString(user));
 	//	log.trace("mndt.type={}", mndt.type);
 	//	log.trace("mndt.pairs.length={}", mndt.pairs.length);
 	//	log.trace("mndt.pairs.keys={}", mndt.pairs.keys);
@@ -201,27 +199,41 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 		{
 			whom = _whom.str;
 
-			log.trace("проверим вхождение whom=[{}] в иерархию пользователя ", whom);
+			version(trace)
+				log.trace("проверим вхождение whom=[{}] в иерархию пользователя ", whom);
 
 			bool is_whom = false;
+			
 			// проверим, попадает ли  пользователь под критерий whom (узел на который выданно)
-			foreach(dep_id; hierarhical_departments_of_user)
+			//	сначала, проверим самого пользователя
+ 		        if(strncmp(user, whom.ptr, whom.length) == 0)
 			{
-				if(strncmp(dep_id, whom.ptr, whom.length) == 0)
-				{
-					log.trace("да, пользователь попадает в иерархию whom");
+			    version(trace)
+				log.trace("да, пользователь попадает в иерархию whom");
+			    is_whom = true;
+			}
+			else
+			{
+			    foreach(dep_id; hierarhical_departments_of_user)
+			    {
+				    if(strncmp(dep_id, whom.ptr, whom.length) == 0)
+				    {
+					version(trace)
+						log.trace("да, пользователь попадает в иерархию whom");
 					is_whom = true;
 					break;
-				}
-				else
-				{
-					log.trace("нет, dep_id = [{}]",  getString(dep_id));					
-				}
+				    } else
+				    {
+					version(trace)
+						log.trace("нет, dep_id = [{}]", getString(dep_id));
+				    }
+			    }
 			}
 
 			if(is_whom == false)
 			{
-				log.trace("нет, пользователь не попадает в иерархию whom");
+				version(trace)
+					log.trace("нет, пользователь не попадает в иерархию whom");
 				return false;
 			}
 		}
@@ -241,23 +253,19 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 			{
 				f_rigth_type = true;
 				break;
-			}
-			else if(ch == 'r' && rightType == RightType.READ)
+			} else if(ch == 'r' && rightType == RightType.READ)
 			{
 				f_rigth_type = true;
 				break;
-			}
-			else if(ch == 'w' && rightType == RightType.WRITE)
+			} else if(ch == 'w' && rightType == RightType.WRITE)
 			{
 				f_rigth_type = true;
 				break;
-			}
-			else if(ch == 'u' && rightType == RightType.UPDATE)
+			} else if(ch == 'u' && rightType == RightType.UPDATE)
 			{
 				f_rigth_type = true;
 				break;
-			}
-			else if(ch == 'd' && rightType == RightType.DELETE)
+			} else if(ch == 'd' && rightType == RightType.DELETE)
 			{
 				f_rigth_type = true;
 				break;
@@ -276,7 +284,9 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 			{
 				if(is_today_in_interval(date_from.str, date_to.str) == false)
 				{
-					log.trace("текущая дата не в указанном мандатом интервале [{} - {}]", date_from.str, date_to.str);
+					version(trace)
+						log.trace("текущая дата не в указанном мандатом интервале [{} - {}]", date_from.str,
+								date_to.str);
 					return false;
 				}
 			}
@@ -295,7 +305,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 					if(qq !is null)
 					{
 						bool res_op_and = false;
-						
+
 						log.trace("found AND");
 						auto atts = qq.pairs;
 
@@ -317,14 +327,14 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 									if(strncmp(triple.p, key.ptr, key.length) == 0)
 									{
-										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, val, getString(
-												triple.o));
+										log.trace("in document {} found key {}, val={}, triple.o={}", getString(
+												triple.s), key, val, getString(triple.o));
 										if(strncmp(triple.o, val.ptr, val.length) == 0)
 										{
-											log.trace("!!!equals");
+											version(trace)
+												log.trace("!!!equals");
 											res_op_and = true;
-										}
-										else
+										} else
 										{
 											res_op_and = false;
 											break;
@@ -334,11 +344,11 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 									iterator1 = iterator1.next_triple_list_element;
 								}
 
-							}
-							else if(key == "doctype" && res_op_and == true)
+							} else if(key == "doctype" && res_op_and == true)
 							{
 								// "doctype" = DOCUMENT_TEMPLATE_ID
-								log.trace("{}={}", key, value.toString);
+								version(trace)
+									log.trace("{}={}", key, value.toString);
 
 								triple_list_element* iterator1 = iterator_facts_of_document;
 								while(iterator1 !is null)
@@ -347,14 +357,15 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 									if(strncmp(triple.p, DOCUMENT_TEMPLATE_ID.ptr, DOCUMENT_TEMPLATE_ID.length) == 0)
 									{
-										log.trace("in document {} found key {}, val={}, triple.o={}", getString(triple.s), key, val, getString(
-												triple.o));
+										version(trace)
+											log.trace("in document {} found key {}, val={}, triple.o={}", getString(
+													triple.s), key, val, getString(triple.o));
 										if(strncmp(triple.o, val.ptr, val.length) == 0)
 										{
-											log.trace("!!!equals");
+											version(trace)
+												log.trace("!!!equals");
 											res_op_and = true;
-										}
-										else
+										} else
 										{
 											res_op_and = false;
 											break;
@@ -372,11 +383,15 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 						res = res_op_and;
 					}
 
-					log.trace("aa.type[{}]={}", aa.type, aa);
+					version(trace)
+						log.trace("aa.type[{}]={}", aa.type, aa);
 				}
 			}
 		}
 	}
+
+	version(trace)
+		log.trace("calculate_condition end");
 
 	return res;
 }

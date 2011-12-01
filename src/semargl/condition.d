@@ -328,6 +328,9 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 		{
 			if(condt.type == asString)
 			{
+				version(trace)
+					log.trace("eval ({})", condt.str);
+
 				bool eval_res = eval(condt.str, iterator_facts_of_document);
 				version(trace)
 					log.trace("eval:{}, res={}", condt.str, eval_res);
@@ -444,7 +447,7 @@ bool eval(string expr, triple_list_element* data)
 {
 	expr = Util.trim(expr);
 
-	//	log.trace("expr={}", expr);
+	//	log.trace("expr: {}", expr);
 
 	static int findOperand(string s, string op1)
 	{
@@ -502,6 +505,7 @@ bool eval(string expr, triple_list_element* data)
 		} else
 		{
 			// нужно найти данный предикат tokens[0] в data и взять его значение
+			//			log.trace("нужно найти данный предикат tokens[0] в data и взять его значение");
 			A = getFirstObject(data, tokens[0]);
 		}
 
@@ -511,6 +515,7 @@ bool eval(string expr, triple_list_element* data)
 			B = tokens[2][1 .. $ - 1];
 		} else
 		{
+			//			log.trace("нужно найти данный предикат tokens[1] в data и взять его значение");
 			// нужно найти данный предикат tokens[1] в data и взять его значение
 			B = getFirstObject(data, tokens[2]);
 		}

@@ -18,18 +18,24 @@ struct Counts
 
 string getFirstObject(triple_list_element* iterator1, string predicate)
 {
-
+	string res;
 	while(iterator1 !is null)
 	{
 		Triple* triple = iterator1.triple;
 
 		if(strncmp(triple.p, predicate.ptr, predicate.length) == 0)
 		{
-			return getString(triple.o);
+			if(triple.o !is null)
+			{
+				res = getString(triple.o);
+				return res;
+			} else
+				return null;
 		}
 
 		iterator1 = iterator1.next_triple_list_element;
 	}
+	return null;
 }
 
 public void print_list_triple(triple_list_element* list_iterator)

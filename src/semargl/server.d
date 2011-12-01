@@ -1027,8 +1027,8 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 
 		if(apoptosis_mode == true)
 		{
-			log.trace("harakiri !!!");
-			cinfo_exit = true;
+//			log.trace("harakiri !!!");
+//			cinfo_exit = true;
 			throw ex;
 		}
 

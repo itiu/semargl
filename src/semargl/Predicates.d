@@ -92,5 +92,5 @@ public static const String RIGHTS = AUTHORIZATION_ACL_NAMESPACE ~ "rt";
 
 public static const String CREATOR = "pcr";
 public static const String IDENTIFIER = "pid";
-public static const String HAS_PART = NAMESPACE ~ "hsPt";
+//public static const String HAS_PART = NAMESPACE ~ "hsPt";
 public static const String MEMBER_OF = NAMESPACE ~ "mmbOf";

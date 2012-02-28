@@ -231,7 +231,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 			whom = _whom.str;
 
 			version(trace)
-				log.trace("проверим вхождение whom=[{}] в иерархию пользователя ", whom);
+				log.trace("condition: проверим вхождение whom=[{}] в иерархию пользователя ", whom);
 
 			bool is_whom = false;
 
@@ -240,7 +240,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 			if(strncmp(user, whom.ptr, whom.length) == 0)
 			{
 				version(trace)
-					log.trace("да, пользователь попадает в иерархию whom");
+					log.trace("condition: да, пользователь попадает в иерархию whom");
 				is_whom = true;
 			} else
 			{
@@ -249,13 +249,13 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 					if(strncmp(dep_id, whom.ptr, whom.length) == 0)
 					{
 						version(trace)
-							log.trace("да, пользователь попадает в иерархию whom");
+							log.trace("condition: да, пользователь попадает в иерархию whom");
 						is_whom = true;
 						break;
 					} else
 					{
 						version(trace)
-							log.trace("нет, dep_id = [{}]", getString(dep_id));
+							log.trace("condition: нет, dep_id = [{}]", getString(dep_id));
 					}
 				}
 			}
@@ -263,7 +263,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 			if(is_whom == false)
 			{
 				version(trace)
-					log.trace("нет, пользователь не попадает в иерархию whom");
+					log.trace("condition: нет, пользователь не попадает в иерархию whom");
 				return false;
 			}
 		}
@@ -316,7 +316,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 				if(is_today_in_interval(date_from.str, date_to.str) == false)
 				{
 					version(trace)
-						log.trace("текущая дата не в указанном мандатом интервале [{} - {}]", date_from.str,
+						log.trace("condition: текущая дата не в указанном мандатом интервале [{} - {}]", date_from.str,
 								date_to.str);
 					return false;
 				}
@@ -438,7 +438,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 	}
 
 	version(trace)
-		log.trace("calculate_condition end");
+		log.trace("calculate_condition return res={}", res);
 
 	return res;
 }
@@ -447,7 +447,7 @@ bool eval(string expr, triple_list_element* data)
 {
 	expr = Util.trim(expr);
 
-	//	log.trace("expr: {}", expr);
+	log.trace("expr: {}", expr);
 
 	static int findOperand(string s, string op1)
 	{
@@ -493,7 +493,7 @@ bool eval(string expr, triple_list_element* data)
 
 		string[] tokens = Util.split(expr, " ");
 
-		//		log.trace ("tokens={}",  tokens);
+		log.trace ("tokens={}",  tokens);
 
 		if(tokens.length != 3)
 			return false;
@@ -507,6 +507,8 @@ bool eval(string expr, triple_list_element* data)
 			// нужно найти данный предикат tokens[0] в data и взять его значение
 			//			log.trace("нужно найти данный предикат tokens[0] в data и взять его значение");
 			A = getFirstObject(data, tokens[0]);
+			if (A !is null)
+			    log.trace ("{} = {}", tokens[0], A);
 		}
 
 		if(tokens[2][0] == '\'' || tokens[2][0] == '"' || tokens[2][0] == '`')
@@ -518,6 +520,8 @@ bool eval(string expr, triple_list_element* data)
 			//			log.trace("нужно найти данный предикат tokens[1] в data и взять его значение");
 			// нужно найти данный предикат tokens[1] в data и взять его значение
 			B = getFirstObject(data, tokens[2]);
+			if (B !is null)
+			    log.trace ("{} = {}", tokens[2], B);
 		}
 
 		//		log.trace ("[A={} tokens[1]={} B={}]", A, tokens[1], B);
@@ -526,5 +530,6 @@ bool eval(string expr, triple_list_element* data)
 			return A == B;
 	}
 
+	log.trace ("return false");
 	return false;
 }

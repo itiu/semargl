@@ -29,12 +29,14 @@ public char*[] getDepartmentTreePathOfUser(char* user, TripleStorage ts)
 	triple_list_element* iterator0;
 	Triple* triple0;
 
-	//	log.trace("getDepartmentTreePath #1 for user={}", getString(user));
+	version(trace)
+		log.trace("getDepartmentTreePath #1 for user={}", getString(user));
 
 	iterator0 = ts.getTriples(user, MEMBER_OF.ptr, null);
 	triple_list_element* iterator0_FE = iterator0;
 
-	//print_list_triple(iterator0);
+	version(trace)
+		print_list_triple(iterator0);
 
 	if(iterator0 !is null)
 	{
@@ -43,24 +45,37 @@ public char*[] getDepartmentTreePathOfUser(char* user, TripleStorage ts)
 
 		if(next_branch !is null)
 		{
-			//log.trace("getDepartmentTreePath #1 next_branch={}", getString(next_branch));
+
+			version(trace)
+				log.trace("getDepartmentTreePath #1 next_branch={}", getString(next_branch));
+
 			result[count_result] = next_branch;
 			count_result++;
 		}
 
 		while(next_branch !is null)
 		{
-			triple_list_element* iterator1 = ts.getTriples(null, HAS_PART.ptr, next_branch);
+			version(trace)
+				log.trace("query: [{}][{}][null]", getString(next_branch), getString(MEMBER_OF.ptr));
+
+			triple_list_element* iterator1 = ts.getTriples(next_branch, MEMBER_OF.ptr, null);
+
+			version(trace)
+				print_list_triple(iterator1);
+
 			triple_list_element* iterator1_FE = iterator1;
 			next_branch = null;
 			if(iterator1 !is null)
 			{
 				Triple* triple = iterator1.triple;
-				char* s = cast(char*) triple.s;
-				//log.trace("next_element1={}", getString (s));
-				result[count_result] = s;
+				char* o = cast(char*) triple.o;
+
+				version(trace)
+					log.trace("next_element1={}", getString(o));
+
+				result[count_result] = o;
 				count_result++;
-				next_branch = s;
+				next_branch = o;
 				ts.list_no_longer_required(iterator1_FE);
 			}
 
@@ -68,8 +83,6 @@ public char*[] getDepartmentTreePathOfUser(char* user, TripleStorage ts)
 		ts.list_no_longer_required(iterator0_FE);
 
 	}
-
-	//		Stdout.format("getDepartmentTreePath #5 ok").newline;
 
 	result.length = count_result;
 	return result;

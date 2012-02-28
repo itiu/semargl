@@ -21,7 +21,7 @@ public bool calculate(char* user, char* elementId, uint rightType, TripleStorage
 
 	version(trace)
 		if(elementId !is null)
-			log.trace("S11ACLRightsHierarhical document = {}", elementId[0 .. strlen(elementId)]);
+			log.trace("ACLRightsHierarhical document = {}", elementId[0 .. strlen(elementId)]);
 
 	if((RightType.WRITE == rightType) || (RightType.DELETE == rightType))
 	{
@@ -35,6 +35,9 @@ public bool calculate(char* user, char* elementId, uint rightType, TripleStorage
 			result = checkRight(user, elementId, rightType, ts, hierarhical_departments_or_delegates, pp,
 					authorizedElementCategory);
 		}
+		version(trace)
+			log.trace("result={}", result);
+
 	} else
 	{
 		version(trace)
@@ -46,6 +49,9 @@ public bool calculate(char* user, char* elementId, uint rightType, TripleStorage
 		//					result = iSystem.authorizationComponent.checkRight(null , null, null, "BA", null, orgIds, category, elementId, rightType);
 		result = checkRight(user, elementId, rightType, ts, hierarhical_departments_or_delegates, pp,
 				authorizedElementCategory);
+
+		version(trace)
+			log.trace("result={}", result);
 	}
 
 	return result;
@@ -60,17 +66,23 @@ bool checkRight(char* user, char* elementId, uint rightType, TripleStorage ts,
 				hierarhical_departments_or_delegates.length, rightType);
 
 	// найдем все ACL записи для заданных user и elementId 
-	triple_list_element* iterator1 = cast(triple_list_element*) ts.getTriplesUseIndexS1PPOO(cast(char*) pp, user,
-			elementId);
+	version(trace)
+		log.trace("найдем все ACL записи для заданных user и elementId");
 
 	version(trace)
 		log.trace("checkRight #1 query: pp={}, o1={}, o2={}", pp, getString(user), getString(elementId));
+
+	triple_list_element* iterator1 = cast(triple_list_element*) ts.getTriplesUseIndexS1PPOO(cast(char*) pp, user,
+			elementId);
 
 	version(trace)
 		print_list_triple(iterator1);
 
 	bool res = lookRightOfIterator(iterator1, rt_symbols + rightType, ts, authorizedElementCategory);
 	ts.list_no_longer_required(iterator1);
+
+	version(trace)
+		log.trace("result={}", res);
 
 	if(res == true)
 	{
@@ -81,19 +93,30 @@ bool checkRight(char* user, char* elementId, uint rightType, TripleStorage ts,
 	}
 
 	// проверим на вхождение elementId в вышестоящих узлах орг структуры
+	version(trace)
+		log.trace("проверим на вхождение elementId в вышестоящих узлах орг структуры");
+
 	for(int i = hierarhical_departments_or_delegates.length - 1; i >= 0; i--)
 	{
 		version(trace)
-			log.trace("hierarhical_departments_or_delegates[{}]={}", i, getString(
+			log.trace("	hierarhical_departments_or_delegates[{}]={}", i, getString(
 					hierarhical_departments_or_delegates[i]));
+
+		version(trace)
+			log.trace("checkRight #2 query: pp={}, o1={}, o2={}", pp,
+					getString(hierarhical_departments_or_delegates[i]), getString(elementId));
 
 		triple_list_element* iterator2 = cast(triple_list_element*) ts.getTriplesUseIndexS1PPOO(cast(char*) pp,
 				hierarhical_departments_or_delegates[i], elementId);
 
-		//		print_list_triple(iterator2);
+		version(trace)
+			print_list_triple(iterator2);
 
 		res = lookRightOfIterator(iterator2, rt_symbols + rightType, ts, authorizedElementCategory);
 		ts.list_no_longer_required(iterator2);
+
+		version(trace)
+			log.trace("	result={}", res);
 
 		if(res == true)
 			return true;

@@ -120,7 +120,7 @@ class Authorization
 		//		i_know_predicates[d++] = "magnet-ontology#typeName";
 
 		// ORGANIZATION
-		i_know_predicates[d++] = HAS_PART;
+//		i_know_predicates[d++] = HAS_PART;
 
 		i_know_predicates[d++] = MEMBER_OF;
 		i_know_predicates[d++] = IS_ADMIN;
@@ -199,7 +199,7 @@ class Authorization
 			ts.setPredicatesToS1PPOO(TARGET_SUBSYSTEM_ELEMENT, ELEMENT_ID, RIGHTS);
 			//			ts.setPredicatesToS1PPOO(AUTHORIZATION_ACL_NAMESPACE, TARGET_SUBSYSTEM_ELEMENT, RIGHTS);
 
-			ts.define_predicate_as_multiple(HAS_PART);
+//			ts.define_predicate_as_multiple(HAS_PART);
 			ts.set_log_query_mode(false);
 			//			ts.f_trace_addTriple = true;
 
@@ -397,9 +397,8 @@ class Authorization
 		bool calculatedRight;
 
 		if(f_authorization_trace)
-		{
 			log.trace("autorize:S01UserIsAdmin res={}", isAdmin);
-		}
+
 		bool result;
 		if(strcmp(authorizedElementCategory, semargl.Category.PERMISSION.ptr) == 0)
 		{
@@ -409,9 +408,7 @@ class Authorization
 			result = isAdmin || calculatedRight;
 
 			if(f_authorization_trace)
-			{
-				log.trace("end autorize: isAdmin || calculatedRight = {}", result);
-			}
+				log.trace("return autorize: isAdmin || calculatedRight = {}", result);
 
 			return result;
 		}
@@ -421,39 +418,40 @@ class Authorization
 		if(result)
 		{
 			if(f_authorization_trace)
-			{
-				log.trace("end autorize: DocumentOfTemplateLocalAdmin result = {}", result);
-			}
+				log.trace("return autorize: DocumentOfTemplateLocalAdmin result = {}", result);
+
 			return true;
 		}
+		if(f_authorization_trace)
+			log.trace("autorize: end DocumentOfTemplateLocalAdmin result = {}", result);
 
 		int is_in_docflow = -1;
 		if((targetRightType == RightType.UPDATE || targetRightType == RightType.DELETE || targetRightType == RightType.WRITE) && strcmp(
 				authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0)
 		{
 			if(f_authorization_trace)
-			{
-				log.trace("#udw, category = DOCUMENT");
-			}
+				log.trace("autorize: category = DOCUMENT");
+
 			is_in_docflow = semargl.scripts.S05InDocFlow.calculate(User, authorizedElementId, targetRightType, ts);
 			if(is_in_docflow == 1)
 			{
 				//counters[1]++;
 				if(f_authorization_trace)
-				{
-					log.trace("end autorize: S05InDocFlow = {}", 1);
-				}
+					log.trace("return autorize: S05InDocFlow = {}", 1);
+
 				return true;
 			} else if(is_in_docflow == 0)
 			{
 				//counters[2]++;
 				if(f_authorization_trace)
-				{
-					log.trace("end autorize: S05InDocFlow = {}", 0);
-				}
+					log.trace("return autorize: S05InDocFlow = {}", 0);
+
 				return isAdmin;
 			}
 		}
+
+		if(f_authorization_trace)
+			log.trace("autorize: end S05InDocFlow");
 
 		if(targetRightType == RightType.CREATE && (strcmp(authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0 || (*authorizedElementId == '*' && strcmp(
 				authorizedElementCategory, semargl.Category.DOCUMENT_TEMPLATE.ptr) == 0)))
@@ -462,12 +460,13 @@ class Authorization
 			if(semargl.scripts.S01AllLoggedUsersCanCreateDocuments.calculate(targetRightType))
 			{
 				if(f_authorization_trace)
-				{
-					log.trace("end autorize: S01AllLoggedUsersCanCreateDocuments = {}", true);
-				}
+					log.trace("return autorize: S01AllLoggedUsersCanCreateDocuments = {}", true);
+
 				return true;
 			}
-			////log.trace("autorize end#0, return:[{}]", calculatedRight);
+
+			if(f_authorization_trace)
+				log.trace("autorize: end S01AllLoggedUsersCanCreateDocuments");
 		}
 
 		result = strcmp(authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0 && semargl.scripts.S09DocumentOfTemplate.calculate(
@@ -475,70 +474,70 @@ class Authorization
 		if(result)
 		{
 			if(f_authorization_trace)
-			{
-				log.trace("end autorize: S09DocumentOfTemplate result = {}", result);
-			}
+				log.trace("return autorize: S09DocumentOfTemplate result = {}", result);
+
 			return true;
 		}
+		if(f_authorization_trace)
+			log.trace("autorize: end S09DocumentOfTemplate result = {}", result);
 
 		if(strcmp("null", authorizedElementId) != 0 && iterator_facts_of_document is null && strcmp(
 				authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0)
 		{
 			if(f_authorization_trace)
-			{
-				//				log.trace("iterator_facts_of_document [s={}] is null", getString(subject_document));
-				log.trace("end autorize: end#2, return:[false]");
-			}
+				log.trace("return autorize: #2, return:[false]");
 
 			return false;
 		}
+		if(f_authorization_trace)
+			log.trace("autorize: end #2");
 
 		if(semargl.scripts.S11ACLRightsHierarhical.calculate(User, authorizedElementId, targetRightType, ts,
 				hierarhical_departments_or_delegates, pp, authorizedElementCategory))
 		{
 			if(f_authorization_trace)
-				log.trace("end autorize: S11ACLRightsHierarhical.calculate return:[true]");
+				log.trace("return autorize: S11ACLRightsHierarhical return:[true]");
 
 			return true;
 		}
+		if(f_authorization_trace)
+			log.trace("autorize: end S11ACLRightsHierarhical");
 
 		if(semargl.scripts.S10UserIsAuthorOfDocument.calculate(User, authorizedElementId, targetRightType, ts,
 				iterator_facts_of_document))
 		{
 			if(f_authorization_trace)
-				log.trace("end autorize: S10UserIsAuthorOfDocument.calculate return:[true]");
+				log.trace("return autorize: S10UserIsAuthorOfDocument return:[true]");
+
 			return true;
 		}
+		if(f_authorization_trace)
+			log.trace("autorize: end S10UserIsAuthorOfDocument");
 
 		foreach(condition; conditions)
 		{
-			//			log.trace ("#1 {");
 			if(calculate_condition(User, condition, iterator_facts_of_document, hierarhical_departments_or_delegates,
 					targetRightType) == true)
 			{
 				if(f_authorization_trace)
-					log.trace("end autorize: calculate_condition return:[true]");
+					log.trace("return autorize: calculate_condition return:[true]");
 				return true;
 			}
-			//			log.trace ("#1 }");
 		}
+		if(f_authorization_trace)
+			log.trace("autorize: end calculate_condition");
 
 		if(isAdmin)
 		{
 			if(f_authorization_trace)
-			{
-				log.trace("end autorize: isAdmin = {}", true);
-			}
+				log.trace("return autorize: isAdmin = {}", true);
 			return true;
 		}
+		log.trace("autorize: end isAdmin");
 
 		if(f_authorization_trace)
-		{
-			log.trace("end autorize: Access Denied");
-		}
+			log.trace("return autorize: Access Denied, return:[false]");
 
-		if(f_authorization_trace)
-			log.trace("end autorize: return:[false]");
 		return false;
 	}
 

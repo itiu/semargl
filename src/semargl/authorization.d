@@ -533,7 +533,9 @@ class Authorization
 				log.trace("return autorize: isAdmin = {}", true);
 			return true;
 		}
-		log.trace("autorize: end isAdmin");
+
+		if(f_authorization_trace)
+			log.trace("autorize: end isAdmin");
 
 		if(f_authorization_trace)
 			log.trace("return autorize: Access Denied, return:[false]");

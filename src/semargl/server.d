@@ -1370,7 +1370,9 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 			if(delegates_facts !is null)
 			{
 				hierarhical_delegates_document_id[ii] = delegates_facts.triple.o;
-				//				log.trace("hierarhical_delegates_document_id[{}] = ", ii, getString(delegates_facts.triple.o));
+				
+				version (trace)				
+				    log.trace("hierarhical_delegates_document_id[{}] = ", ii, getString(delegates_facts.triple.o));
 
 			}
 		}

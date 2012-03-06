@@ -1083,6 +1083,7 @@ class Authorization
 				char* dr_df;
 				char* dr_dt;
 				char* dr_wt;
+				char* dr_dc;
 
 				while(delegate_records !is null)
 				{
@@ -1093,7 +1094,11 @@ class Authorization
 						log.trace("		facts = <{}><{}><{}>", getString(dr.s), getString(dr.p), getString(dr.o));
 					}
 
-					if(strcmp(dr.p, DELEGATION_OWNER.ptr) == 0)
+					if(strcmp(dr.p, DELEGATION_DOCUMENT_ID.ptr) == 0)
+					{
+						dr_dc = cast(char*) dr.o;
+
+					} else if(strcmp(dr.p, DELEGATION_OWNER.ptr) == 0)
 					{
 						dr_ow = cast(char*) dr.o;
 
@@ -1126,6 +1131,9 @@ class Authorization
 					if(dr_de !is null)
 						result_ptr = print_triple_to_buff(result_ptr, dr_subject, DELEGATION_DELEGATE.ptr, dr_de);
 
+					if(dr_dc !is null)
+						result_ptr = print_triple_to_buff(result_ptr, dr_subject, DELEGATION_DOCUMENT_ID.ptr, dr_dc);
+						
 					if(dr_wt !is null)
 						result_ptr = print_triple_to_buff(result_ptr, dr_subject, DELEGATION_WITH_TREE.ptr, dr_wt);
 

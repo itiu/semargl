@@ -58,8 +58,11 @@ class Element
 
 }
 
-Element json2Element(Json!(char).JsonValue* je, Element oe = null)
+Element json2Element(Json!(char).JsonValue* je, int level, Element oe = null)
 {
+	if (level > 15)
+	    throw new Exception ("json2Element, level > 15");
+
 	if(oe is null)
 		oe = new Element;
 
@@ -72,7 +75,7 @@ Element json2Element(Json!(char).JsonValue* je, Element oe = null)
 			char[] key_copy = new char[key.length];
 
 			key_copy[] = key[];
-			oe.pairs[key_copy] = json2Element(value);
+			oe.pairs[key_copy] = json2Element(value, level + 1);
 		}
 
 		return oe;
@@ -87,7 +90,7 @@ Element json2Element(Json!(char).JsonValue* je, Element oe = null)
 		int qq = 0;
 		foreach(aa; arr)
 		{
-			oe.array[qq] = json2Element(aa);
+			oe.array[qq] = json2Element(aa, level + 1);
 			qq++;
 		}
 	} else if(je.type == 1)
@@ -124,6 +127,9 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 		if(triple !is null)
 		{
 			char* mandat_subject = cast(char*) triple.s;
+			
+			try
+			{
 			printf("found mandat %s\n", mandat_subject);
 			log.trace("found mandat: {}", getString(mandat_subject));
 
@@ -178,7 +184,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 						json.parse(str);
 
 						Element root = new Element;
-						json2Element(json.value, root);
+						json2Element(json.value, 0, root);
 						conditions[count] = root;
 
 						//						log.trace("element root: {}", root.toString);
@@ -190,12 +196,17 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 
 					} catch(Exception ex)
 					{
+					
 						log.trace("error:json: [{}], exception: {}", str, ex.msg);
-
 					}
 
 				}
 			}
+			} catch (Exception ex)
+			{
+				log.trace("error:load mandat ");			
+			}
+			
 
 		}
 		iterator = iterator.next_triple_list_element;

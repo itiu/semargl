@@ -58,11 +58,8 @@ class Element
 
 }
 
-Element json2Element(Json!(char).JsonValue* je, int level, Element oe = null)
+Element json2Element(Json!(char).JsonValue* je, ref bool[char[]] passed_elements, Element oe = null)
 {
-	if (level > 15)
-	    throw new Exception ("json2Element, level > 15");
-
 	if(oe is null)
 		oe = new Element;
 
@@ -70,18 +67,26 @@ Element json2Element(Json!(char).JsonValue* je, int level, Element oe = null)
 	{
 		auto atts = je.toObject.attributes;
 
+		int i=0;
 		foreach(key, value; atts)
 		{
+		    if ((key in passed_elements) is null)
+		    {
+			passed_elements[key] = true;
 			char[] key_copy = new char[key.length];
+			
+			version (trace)
+			    log.trace ("key={}", key);
 
 			key_copy[] = key[];
-			oe.pairs[key_copy] = json2Element(value, level + 1);
+			
+			oe.pairs[key_copy] = json2Element(value, passed_elements);
+		   }
 		}
 
 		return oe;
 	} else if(je.type == 5)
 	{
-		oe.type = asArray;
 
 		auto arr = je.toArray;
 
@@ -90,7 +95,7 @@ Element json2Element(Json!(char).JsonValue* je, int level, Element oe = null)
 		int qq = 0;
 		foreach(aa; arr)
 		{
-			oe.array[qq] = json2Element(aa, level + 1);
+			oe.array[qq] = json2Element(aa, passed_elements);
 			qq++;
 		}
 	} else if(je.type == 1)
@@ -111,11 +116,6 @@ Element json2Element(Json!(char).JsonValue* je, int level, Element oe = null)
 
 void load_mandats(ref Element[] conditions, TripleStorage ts)
 {
-	Json!(char) json;
-	json = new Json!(char);
-
-	//	conditions = new Json!(char).JsonValue*[16];
-
 	log.trace("start load documents[mandat]");
 	triple_list_element* iterator = ts.getTriples(null, DOCUMENT_TEMPLATE_ID.ptr,
 			"e277410330be4e7a8814185301e3e5bf".ptr);
@@ -130,17 +130,17 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 			
 			try
 			{
-			printf("found mandat %s\n", mandat_subject);
-			log.trace("found mandat: {}", getString(mandat_subject));
+			    printf("found mandat %s\n", mandat_subject);
+			    log.trace("found mandat: {}", getString(mandat_subject));
 
-			triple_list_element* iterator1 = ts.getTriples(mandat_subject, "condition", null);
-			if(iterator1 !is null)
-			{
+			    triple_list_element* iterator1 = ts.getTriples(mandat_subject, "condition", null);
+			    if(iterator1 !is null)
+			    {
 				Triple* triple1 = iterator1.triple;
 				if(triple !is null)
 				{
 					char* qq = triple1.o;
-					log.trace("str0: {}", getString(qq));
+//					log.trace("str0: {}", getString(qq));
 
 					char* ptr = qq;
 
@@ -177,14 +177,20 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 					}
 
 					char[] str = getString(qq);
+					
+			
 					log.trace("str1: {}", str);
 
 					try
 					{
+						Json!(char) json;
+						json = new Json!(char);
+						
 						json.parse(str);
 
 						Element root = new Element;
-						json2Element(json.value, 0, root);
+						bool[char[]] passed_elements;
+						json2Element(json.value, passed_elements, root);
 						conditions[count] = root;
 
 						//						log.trace("element root: {}", root.toString);
@@ -197,6 +203,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 					} catch(Exception ex)
 					{
 					
+						printf("error:load mandat #1");
 						log.trace("error:json: [{}], exception: {}", str, ex.msg);
 					}
 
@@ -204,7 +211,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 			}
 			} catch (Exception ex)
 			{
-				log.trace("error:load mandat ");			
+				log.trace("error:load mandat #2");			
 			}
 			
 
@@ -307,7 +314,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 			{
 				f_rigth_type = true;
 				break;
-			} else if(ch == 'd' && rightType == RightType.DELETE)
+			} else if(ch == 'a')
 			{
 				f_rigth_type = true;
 				break;
@@ -456,9 +463,13 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 bool eval(string expr, triple_list_element* data)
 {
+	if (expr == "true")
+	    return true;
+    
 	expr = Util.trim(expr);
 
-	log.trace("expr: {}", expr);
+	version (trace)
+	    log.trace("expr: {}", expr);
 
 	static int findOperand(string s, string op1)
 	{
@@ -504,7 +515,8 @@ bool eval(string expr, triple_list_element* data)
 
 		string[] tokens = Util.split(expr, " ");
 
-		log.trace ("tokens={}",  tokens);
+		version (trace)
+		    log.trace ("tokens={}",  tokens);
 
 		if(tokens.length != 3)
 			return false;
@@ -531,6 +543,7 @@ bool eval(string expr, triple_list_element* data)
 			//			log.trace("нужно найти данный предикат tokens[1] в data и взять его значение");
 			// нужно найти данный предикат tokens[1] в data и взять его значение
 			B = getFirstObject(data, tokens[2]);
+			
 			if (B !is null)
 			    log.trace ("{} = {}", tokens[2], B);
 		}
@@ -541,6 +554,8 @@ bool eval(string expr, triple_list_element* data)
 			return A == B;
 	}
 
-	log.trace ("return false");
+	version (trace)
+	    log.trace ("return false");
 	return false;
+	
 }

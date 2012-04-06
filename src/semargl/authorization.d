@@ -78,7 +78,7 @@ class Authorization
 	this(char[][char[]] props, bool _triples_in_memory, bool _use_cache_for_TripleStorageOnMongodb,
 			bool _load_n3log_into_mongodb)
 	{
-		conditions = new Element[16];
+		conditions = new Element[256];
 
 		triples_in_memory = _triples_in_memory;
 		load_n3log_into_mongodb = _load_n3log_into_mongodb;

@@ -47,7 +47,6 @@ public bool calculate(char* user, TripleStorage ts, char*[] array_of_targets_of_
 
 public bool isAdmin(char* user, TripleStorage ts)
 {
-
 	triple_list_element* iterator0 = ts.getTriples(user, IS_ADMIN.ptr, "true");
 	ts.list_no_longer_required (iterator0);
 

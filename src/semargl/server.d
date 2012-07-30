@@ -700,11 +700,8 @@ void get_message(byte* message, ulong message_size, mom_client from_client)
 					strcpy(queue_name, fact_o[reply_to_id]);
 
 					send_result_and_logging_messages(queue_name, result_buffer, from_client, false);
-
-					//				uint* SET = az.getTripleStorage.getTriples(null, null, "45fd1447ef7a46c9ac08b73cddc776d4");
-					//				fact_tools.print_list_triple(SET);
 				}
-
+				
 				if(delete_subjects_by_predicate_id >= 0 && arg_id > 0)
 				{
 					delete_subjects_by_predicate(fact_s, fact_p, fact_o, is_fact_in_object, count_facts, arg_id, elapsed, from_client);
@@ -1052,6 +1049,7 @@ void remove_subject(char* s)
 
 	if(removed_facts !is null)
 	{
+		char[] subj = getString(s);
 
 		char[][20] s_a;
 		char[][20] p_a;
@@ -1090,6 +1088,18 @@ void remove_subject(char* s)
 		}
 
 		az.getTripleStorage.list_no_longer_required(removed_facts_FE);
+
+		foreach(condition; az.conditions)
+		{				
+		    log.trace ("condition: {}, {}", condition.id, subj);
+		    if(condition.id == subj)
+		    {
+			// это удалялся мандат, перечитать оставшиеся мандаты
+			log.trace("condition remove !!!, reload mandats");
+			load_mandats(az.conditions, az.getTripleStorage ());
+			break;
+		    }
+		}
 
 	}
 }

@@ -25,6 +25,7 @@ class Element
 	Element[char[]] pairs;
 	Element[] array;
 	char[] str;
+	char[] id;
 
 	byte type;
 
@@ -116,11 +117,12 @@ Element json2Element(Json!(char).JsonValue* je, ref bool[char[]] passed_elements
 
 void load_mandats(ref Element[] conditions, TripleStorage ts)
 {
-	log.trace("start load documents[mandat]");
+	log.trace("start load documents[uid=mandat]");
 	triple_list_element* iterator = ts.getTriples(null, DOCUMENT_TEMPLATE_ID.ptr,
-			"e277410330be4e7a8814185301e3e5bf".ptr);
+			"mandat".ptr);
 
 	int count = 0;
+	
 	while(iterator !is null)
 	{
 		Triple* triple = iterator.triple;
@@ -130,9 +132,6 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 			
 			try
 			{
-			    printf("found mandat %s\n", mandat_subject);
-			    log.trace("found mandat: {}", getString(mandat_subject));
-
 			    triple_list_element* iterator1 = ts.getTriples(mandat_subject, "condition", null);
 			    if(iterator1 !is null)
 			    {
@@ -179,7 +178,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 					char[] str = getString(qq);
 					
 			
-					log.trace("str1: {}", str);
+//					log.trace("str1: {}", str);
 
 					try
 					{
@@ -191,14 +190,23 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 						Element root = new Element;
 						bool[char[]] passed_elements;
 						json2Element(json.value, passed_elements, root);
+						
+						char[] tt = getString (mandat_subject);
+						
+						root.id =  new char[tt.length];
+						
+						root.id[] = tt[];
+						
+						if(conditions.length <= count)
+							conditions.length = conditions.length + 16;
+						
 						conditions[count] = root;
-
-						//						log.trace("element root: {}", root.toString);
 
 						count++;
 
-						if(conditions.length < count)
-							conditions.length = conditions.length + 16;
+
+						printf("found mandat %s\n", mandat_subject);
+						log.trace("found mandat: {}", root.id);
 
 					} catch(Exception ex)
 					{

@@ -130,6 +130,8 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 		{
 			char* mandat_subject = cast(char*) triple.s;
 			
+			if ( !(*(mandat_subject+0) == 'd' && *(mandat_subject+1) == 'r' && *(mandat_subject+5) == '_'))
+			{
 			try
 			{
 			    triple_list_element* iterator1 = ts.getTriples(mandat_subject, "condition", null);
@@ -221,7 +223,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 			{
 				log.trace("error:load mandat #2");			
 			}
-			
+			}
 
 		}
 		iterator = iterator.next_triple_list_element;

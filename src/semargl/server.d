@@ -1581,11 +1581,13 @@ private bool calculate_right_according_to_delegation(char* categoryId, char* gua
 					//					log.trace("calculate_right_according_to_delegation #8", calculatedRight);
 					char* inherit_rights_of = triple0.o;
 
-					level++;
-
-					calculatedRight = calculate_right_according_to_delegation(categoryId, inherit_rights_of, targetRightType,
+					if (targetRightType == RightType.READ)
+					{
+					    level++;
+					    calculatedRight = calculate_right_according_to_delegation(categoryId, inherit_rights_of, targetRightType,
 							hierarhical_departments, isAdmin, hierarhical_delegates, hierarhical_delegates_document_id,
 							hierarhical_departments_of_delegate, level);
+					}
 
 					break;
 				}

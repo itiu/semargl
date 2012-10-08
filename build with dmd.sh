@@ -1,6 +1,6 @@
 DMD=~/dmd/bin/dmd
 
-version=27
+version=28
 
 git_host=gh
 cp -r src/* build/src

@@ -3,6 +3,7 @@ module semargl.condition;
 private import tango.text.json.Json;
 private import tango.stdc.stdio;
 private import tango.stdc.string;
+private import tango.stdc.stringz;
 
 private import Util = tango.text.Util;
 
@@ -236,6 +237,8 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 bool calculate_condition(char* user, ref Element mndt, triple_list_element* iterator_facts_of_document,
 		char*[] hierarhical_departments_of_user, uint rightType)
 {
+        string str_user = fromStringz(user);
+
 	version(trace)
 		log.trace("calculate_condition, user={}", getString(user));
 	//	log.trace("mndt.type={}", mndt.type);
@@ -359,7 +362,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 				version(trace)
 					log.trace("eval ({})", condt.str);
 
-				bool eval_res = eval(condt.str, iterator_facts_of_document);
+				bool eval_res = eval(condt.str, iterator_facts_of_document, str_user);
 				version(trace)
 					log.trace("eval:{}, res={}", condt.str, eval_res);
 				return eval_res;
@@ -452,7 +455,6 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 
 							}
 
-							// найдем в документе  
 
 						}
 						res = res_op_and;
@@ -471,7 +473,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 	return res;
 }
 
-bool eval(string expr, triple_list_element* data)
+bool eval(string expr, triple_list_element* data, string user)
 {
 	if (expr == "true")
 	    return true;
@@ -509,13 +511,13 @@ bool eval(string expr, triple_list_element* data)
 	int p2 = findOperand(expr, "||");
 
 	if(p1 >= 0)
-		return eval(expr[0 .. p1], data) && eval(expr[p1 + 2 .. $], data);
+		return eval(expr[0 .. p1], data, user) && eval(expr[p1 + 2 .. $], data, user);
 
 	if(p2 >= 0)
-		return eval(expr[0 .. p2], data) || eval(expr[p2 + 2 .. $], data);
+		return eval(expr[0 .. p2], data, user) || eval(expr[p2 + 2 .. $], data, user);
 
 	if(expr.length > 2 && expr[0] == '(' && expr[$ - 1] == ')')
-		return eval(expr[1 .. $ - 1], data);
+		return eval(expr[1 .. $ - 1], data, user);
 
 	// [==] [!=]
 
@@ -535,6 +537,11 @@ bool eval(string expr, triple_list_element* data)
 		{
 			// это строка
 			A = tokens[0][1 .. $ - 1];
+		}
+		else if(tokens[0][0] == '$' && tokens[0][1] == 'u' && tokens[0][2] == 's' && tokens[0][3] == 'e' && tokens[0][4] == 'r')
+		{
+			// это проверяемый пользователь
+			A = user;
 		} else
 		{
 			// нужно найти данный предикат tokens[0] в data и взять его значение
@@ -543,12 +550,18 @@ bool eval(string expr, triple_list_element* data)
 			if (A !is null)
 			    log.trace ("{} = {}", tokens[0], A);
 		}
+		
 
 		if(tokens[2][0] == '\'' || tokens[2][0] == '"' || tokens[2][0] == '`')
 		{
 			// это строка
 			B = tokens[2][1 .. $ - 1];
 		} else
+		if(tokens[2][0] == '$' && tokens[2][1] == 'u' && tokens[2][2] == 's' && tokens[2][3] == 'e' && tokens[2][4] == 'r')
+		{
+			// это проверяемый пользователь
+			B = user;
+		} else	
 		{
 			//			log.trace("нужно найти данный предикат tokens[1] в data и взять его значение");
 			// нужно найти данный предикат tokens[1] в data и взять его значение

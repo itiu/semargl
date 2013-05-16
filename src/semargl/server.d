@@ -1449,7 +1449,7 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 
 			bool calculatedRight = calculate_right_according_to_delegation(fact_o[category_id], guardedElementId, targetRightType,
 					hierarhical_departments_of_user, isAdmin, hierarhical_delegates, hierarhical_delegates_document_id,
-					hierarhical_departments_of_delegate, 0);
+					hierarhical_departments_of_delegate, 0, az.getTripleStorage());
 
 			if(calculatedRight == true)
 			{
@@ -1513,7 +1513,7 @@ private void prepare_authorization_request(char* fact_s[], char* fact_p[], char*
 
 private bool calculate_right_according_to_delegation(char* categoryId, char* guardedElementId, uint targetRightType,
 		char*[] hierarhical_departments, bool isAdmin, Triple*[] hierarhical_delegates, char*[] hierarhical_delegates_document_id,
-		char*[][] hierarhical_departments_of_delegate, int level)
+		char*[][] hierarhical_departments_of_delegate, int level, TripleStorage ts)
 {
 	bool calculatedRight;
 
@@ -1524,7 +1524,7 @@ private bool calculate_right_according_to_delegation(char* categoryId, char* gua
 	//	log.trace("calculate_right_according_to_delegation #2", calculatedRight);	 
 
 	calculatedRight = az.calculateRightOfAuthorizedElement(categoryId, guardedElementId, user, targetRightType, hierarhical_departments,
-			isAdmin, iterator_facts_of_document);
+			isAdmin, iterator_facts_of_document, ts);
 
 	//	log.trace("calculate_right_according_to_delegation #3", calculatedRight);	 
 
@@ -1541,7 +1541,7 @@ private bool calculate_right_according_to_delegation(char* categoryId, char* gua
 				{
 					//					log.trace("calculate_right_according_to_delegation #4", calculatedRight);	 
 					calculatedRight = az.calculateRightOfAuthorizedElement(categoryId, guardedElementId, hierarhical_delegates[ii].o,
-							targetRightType, hierarhical_departments_of_delegate[ii], isAdmin, iterator_facts_of_document);
+							targetRightType, hierarhical_departments_of_delegate[ii], isAdmin, iterator_facts_of_document, ts);
 				}
 			}
 			else
@@ -1549,7 +1549,7 @@ private bool calculate_right_according_to_delegation(char* categoryId, char* gua
 				uint is_fact_in_object[];
 				//				log.trace("calculate_right_according_to_delegation #5", calculatedRight);	 
 				calculatedRight = az.calculateRightOfAuthorizedElement(categoryId, guardedElementId, hierarhical_delegates[ii].o,
-						targetRightType, hierarhical_departments_of_delegate[ii], isAdmin, iterator_facts_of_document);
+						targetRightType, hierarhical_departments_of_delegate[ii], isAdmin, iterator_facts_of_document, ts);
 
 			}
 
@@ -1586,7 +1586,7 @@ private bool calculate_right_according_to_delegation(char* categoryId, char* gua
 					    level++;
 					    calculatedRight = calculate_right_according_to_delegation(categoryId, inherit_rights_of, targetRightType,
 							hierarhical_departments, isAdmin, hierarhical_delegates, hierarhical_delegates_document_id,
-							hierarhical_departments_of_delegate, level);
+							hierarhical_departments_of_delegate, level, ts);
 					}
 
 					break;

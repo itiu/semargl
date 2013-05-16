@@ -385,7 +385,7 @@ class Authorization
 	// необходимые данные загружены, сделаем пробное выполнение скриптов для заданного пользователя
 	public bool calculateRightOfAuthorizedElement(char* authorizedElementCategory, char* authorizedElementId,
 			char* User, uint targetRightType, char*[] hierarhical_departments_or_delegates, bool isAdmin,
-			triple_list_element* iterator_facts_of_document)
+			triple_list_element* iterator_facts_of_document, TripleStorage ts)
 	{
 		if(f_authorization_trace)
 		{
@@ -517,7 +517,7 @@ class Authorization
 		foreach(condition; conditions)
 		{
 			if(calculate_condition(User, condition, iterator_facts_of_document, hierarhical_departments_or_delegates,
-					targetRightType) == true)
+					targetRightType, ts) == true)
 			{
 				if(f_authorization_trace)
 					log.trace("return autorize: calculate_condition return:[true]");

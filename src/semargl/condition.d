@@ -235,7 +235,7 @@ void load_mandats(ref Element[] conditions, TripleStorage ts)
 }
 
 bool calculate_condition(char* user, ref Element mndt, triple_list_element* iterator_facts_of_document,
-		char*[] hierarhical_departments_of_user, uint rightType)
+		char*[] hierarhical_departments_of_user, uint rightType, TripleStorage ts)
 {
         string str_user = fromStringz(user);
 
@@ -362,7 +362,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 				version(trace)
 					log.trace("eval ({})", condt.str);
 
-				bool eval_res = eval(condt.str, iterator_facts_of_document, str_user);
+				bool eval_res = eval(condt.str, iterator_facts_of_document, str_user, ts);
 				version(trace)
 					log.trace("eval:{}, res={}", condt.str, eval_res);
 				return eval_res;
@@ -473,7 +473,7 @@ bool calculate_condition(char* user, ref Element mndt, triple_list_element* iter
 	return res;
 }
 
-bool eval(string expr, triple_list_element* data, string user)
+bool eval(string expr, triple_list_element* data, string user, TripleStorage ts)
 {
 	if (expr == "true")
 	    return true;
@@ -511,13 +511,13 @@ bool eval(string expr, triple_list_element* data, string user)
 	int p2 = findOperand(expr, "||");
 
 	if(p1 >= 0)
-		return eval(expr[0 .. p1], data, user) && eval(expr[p1 + 2 .. $], data, user);
+		return eval(expr[0 .. p1], data, user, ts) && eval(expr[p1 + 2 .. $], data, user, ts);
 
 	if(p2 >= 0)
-		return eval(expr[0 .. p2], data, user) || eval(expr[p2 + 2 .. $], data, user);
+		return eval(expr[0 .. p2], data, user, ts) || eval(expr[p2 + 2 .. $], data, user, ts);
 
 	if(expr.length > 2 && expr[0] == '(' && expr[$ - 1] == ')')
-		return eval(expr[1 .. $ - 1], data, user);
+		return eval(expr[1 .. $ - 1], data, user, ts);
 
 	// [==] [!=]
 
@@ -533,12 +533,37 @@ bool eval(string expr, triple_list_element* data, string user)
 		if(tokens.length != 3)
 			return false;
 
-		if(tokens[0][0] == '\'' || tokens[0][0] == '"' || tokens[0][0] == '`')
+		string tA = tokens[0];
+		string tB = tokens[2];
+		
+		if(tA[0] == '[')
+		{
+			// это адресация к другому документу
+			// считаем документ указанный в конструкции [field1], 
+			// где field1 поле текущего документа содержащее id требуемого нам документа
+			
+			string[] ttt = Util.split(tA, ".");
+			version (trace)
+		    	log.trace ("A:ttt={}",  ttt);
+			
+			if (ttt.length == 2)
+			{
+				// 1. вытащим имя поля и возьмем его значение
+				string docId = getFirstObject(data, ttt[0][1..$ - 2]);
+				
+				// 2. считаем документ по значению из[2] в: triple_list_element* doc1
+				triple_list_element* data_doc1 = ts.getTriples(docId.ptr, null, null);
+				
+				if (data_doc1 !is null)
+					A = getFirstObject(data_doc1, ttt[1]);				
+			}
+		}
+		else if(tA[0] == '\'' || tA[0] == '"' || tA[0] == '`')
 		{
 			// это строка
-			A = tokens[0][1 .. $ - 1];
+			A = tA[1 .. $ - 1];
 		}
-		else if(tokens[0][0] == '$' && tokens[0][1] == 'u' && tokens[0][2] == 's' && tokens[0][3] == 'e' && tokens[0][4] == 'r')
+		else if(tA[0] == '$' && tA[1] == 'u' && tA[2] == 's' && tA[3] == 'e' && tA[4] == 'r')
 		{
 			// это проверяемый пользователь
 			A = user;
@@ -546,18 +571,40 @@ bool eval(string expr, triple_list_element* data, string user)
 		{
 			// нужно найти данный предикат tokens[0] в data и взять его значение
 			//			log.trace("нужно найти данный предикат tokens[0] в data и взять его значение");
-			A = getFirstObject(data, tokens[0]);
+			A = getFirstObject(data, tA);
 			if (A !is null)
-			    log.trace ("{} = {}", tokens[0], A);
+			    log.trace ("{} = {}", tA, A);
 		}
 		
 
-		if(tokens[2][0] == '\'' || tokens[2][0] == '"' || tokens[2][0] == '`')
+		if(tB[0] == '[')
+		{
+			// это адресация к другому документу
+			// считаем документ указанный в конструкции [field1], 
+			// где field1 поле текущего документа содержащее id требуемого нам документа
+			
+			string[] ttt = Util.split(tB, ".");
+			version (trace)
+	    	log.trace ("B:ttt={}",  ttt);
+
+			if (ttt.length == 2)
+			{
+				// 1. вытащим имя поля и возьмем его значение
+				string docId = getFirstObject(data, ttt[0][1..$ - 2]);
+				
+				// 2. считаем документ по значению из[2] в: triple_list_element* doc1
+				triple_list_element* data_doc1 = ts.getTriples(docId.ptr, null, null);
+				
+				if (data_doc1 !is null)
+					B = getFirstObject(data_doc1, ttt[1]);				
+			}
+		}
+		else 	if(tB[0] == '\'' || tB[0] == '"' || tB[0] == '`')
 		{
 			// это строка
-			B = tokens[2][1 .. $ - 1];
+			B = tB[1 .. $ - 1];
 		} else
-		if(tokens[2][0] == '$' && tokens[2][1] == 'u' && tokens[2][2] == 's' && tokens[2][3] == 'e' && tokens[2][4] == 'r')
+		if(tB[0] == '$' && tB[1] == 'u' && tB[2] == 's' && tB[3] == 'e' && tB[4] == 'r')
 		{
 			// это проверяемый пользователь
 			B = user;
@@ -565,10 +612,10 @@ bool eval(string expr, triple_list_element* data, string user)
 		{
 			//			log.trace("нужно найти данный предикат tokens[1] в data и взять его значение");
 			// нужно найти данный предикат tokens[1] в data и взять его значение
-			B = getFirstObject(data, tokens[2]);
+			B = getFirstObject(data, tB);
 			
 			if (B !is null)
-			    log.trace ("{} = {}", tokens[2], B);
+			    log.trace ("{} = {}", tB, B);
 		}
 
 		//		log.trace ("[A={} tokens[1]={} B={}]", A, tokens[1], B);

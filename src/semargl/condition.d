@@ -550,12 +550,16 @@ bool eval(string expr, triple_list_element* data, string user, TripleStorage ts)
 			{
 				// 1. вытащим имя поля и возьмем его значение
 				string docId = getFirstObject(data, ttt[0][1..$ - 2]);
+		    		log.trace ("A:docId={}",  docId);
 				
+				if (docId !is null && docId.length > 3)
+				{
 				// 2. считаем документ по значению из[2] в: triple_list_element* doc1
 				triple_list_element* data_doc1 = ts.getTriples(docId.ptr, null, null);
 				
 				if (data_doc1 !is null)
 					A = getFirstObject(data_doc1, ttt[1]);				
+				}
 			}
 		}
 		else if(tA[0] == '\'' || tA[0] == '"' || tA[0] == '`')
@@ -593,10 +597,13 @@ bool eval(string expr, triple_list_element* data, string user, TripleStorage ts)
 				string docId = getFirstObject(data, ttt[0][1..$ - 2]);
 				
 				// 2. считаем документ по значению из[2] в: triple_list_element* doc1
+				if (docId !is null && docId.length > 3)
+				{
 				triple_list_element* data_doc1 = ts.getTriples(docId.ptr, null, null);
 				
 				if (data_doc1 !is null)
 					B = getFirstObject(data_doc1, ttt[1]);				
+				}
 			}
 		}
 		else 	if(tB[0] == '\'' || tB[0] == '"' || tB[0] == '`')

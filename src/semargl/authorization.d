@@ -425,6 +425,19 @@ class Authorization
 		if(f_authorization_trace)
 			log.trace("autorize: end DocumentOfTemplateLocalAdmin result = {}", result);
 
+		foreach(condition; conditions)
+		{
+			if(calculate_condition(User, condition, iterator_facts_of_document, hierarhical_departments_or_delegates,
+					RightType.ADMIN, ts) == true)
+			{
+				if(f_authorization_trace)
+					log.trace("return autorize: calculate_condition for admin return:[true]");
+				return true;
+			}
+		}
+		if(f_authorization_trace)
+			log.trace("autorize: end calculate_condition");
+
 		int is_in_docflow = -1;
 		if((targetRightType == RightType.UPDATE || targetRightType == RightType.DELETE || targetRightType == RightType.WRITE) && strcmp(
 				authorizedElementCategory, semargl.Category.DOCUMENT.ptr) == 0)

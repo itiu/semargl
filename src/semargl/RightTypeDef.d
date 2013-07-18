@@ -1,6 +1,6 @@
 module semargl.RightTypeDef;
 
-public static char* rt_symbols = "crwud";
+public static char* rt_symbols = "crwuda";
 
 enum RightType
 {
@@ -8,5 +8,6 @@ enum RightType
 	READ = 1,
 	WRITE = 2,
 	UPDATE = 3,
-	DELETE = 4
+	DELETE = 4,
+	ADMIN = 5	
 }
